@@ -133,7 +133,7 @@ void arv_uv_stream_leader_cb (struct libusb_transfer *transfer)
 			}
 
 			ctx->buffer->priv->system_timestamp_ns = g_get_real_time () * 1000LL;
-			ctx->buffer->priv->gvsp_payload_type = ARV_GVSP_PAYLOAD_TYPE_IMAGE;
+			ctx->buffer->priv->payload_type = ARV_BUFFER_PAYLOAD_TYPE_IMAGE;
 			arv_uvsp_packet_get_region (packet,
 				&ctx->buffer->priv->width, &ctx->buffer->priv->height,
 				&ctx->buffer->priv->x_offset, &ctx->buffer->priv->y_offset);
@@ -504,13 +504,17 @@ arv_uv_stream_thread_sync (void *data)
 					if (buffer != NULL) {
 						buffer->priv->system_timestamp_ns = g_get_real_time () * 1000LL;
 						buffer->priv->status = ARV_BUFFER_STATUS_FILLING;
-						buffer->priv->gvsp_payload_type = ARV_GVSP_PAYLOAD_TYPE_IMAGE;
-						arv_uvsp_packet_get_region (packet,
-									    &buffer->priv->width,
-									    &buffer->priv->height,
-									    &buffer->priv->x_offset,
-									    &buffer->priv->y_offset);
-						buffer->priv->pixel_format = arv_uvsp_packet_get_pixel_format (packet);
+						buffer->priv->payload_type = arv_uvsp_packet_get_buffer_payload_type (packet);
+						buffer->priv->chunk_endianness = G_LITTLE_ENDIAN;
+						if (buffer->priv->payload_type == ARV_BUFFER_PAYLOAD_TYPE_IMAGE ||
+						    buffer->priv->payload_type == ARV_BUFFER_PAYLOAD_TYPE_EXTENDED_CHUNK_DATA) {
+							arv_uvsp_packet_get_region (packet,
+										    &buffer->priv->width,
+										    &buffer->priv->height,
+										    &buffer->priv->x_offset,
+										    &buffer->priv->y_offset);
+							buffer->priv->pixel_format = arv_uvsp_packet_get_pixel_format (packet);
+						}
 						buffer->priv->frame_id = arv_uvsp_packet_get_frame_id (packet);
 						buffer->priv->timestamp_ns = arv_uvsp_packet_get_timestamp (packet);
 						offset = 0;
