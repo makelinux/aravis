@@ -762,7 +762,7 @@ arv_uv_device_finalize (GObject *object)
 	event_thread_run = 0;
 	g_thread_join( event_thread );
 
-	g_object_unref (uv_device->priv->genicam);
+	g_clear_object (&uv_device->priv->genicam);
 
 	g_clear_pointer (&uv_device->priv->vendor, g_free);
 	g_clear_pointer (&uv_device->priv->product, g_free);
