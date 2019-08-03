@@ -1195,20 +1195,13 @@ static void
 activate (GApplication *application)
 {
 	ArvViewer *viewer = (ArvViewer *) application;
-	GtkBuilder *builder;
-	char *ui_filename;
-	GError *err = NULL;
+	g_autoptr (GtkBuilder) builder;
 
-	builder = gtk_builder_new ();
-//#define 	ARAVIS_DATA_DIR "viewer/"
-	if (!gtk_builder_add_from_file (builder, "viewer/arv-viewer.ui", 0)) {
-		ui_filename = g_build_filename (ARAVIS_DATA_DIR, "arv-viewer.ui", NULL);
-		if (!gtk_builder_add_from_file (builder, ui_filename, &err)) {
-			g_error ("Cant't load user interface file: %s", err->message);
-			g_error_free (err);
-		}
+	builder = gtk_builder_new_from_resource ("/org/aravis/viewer/arv-viewer.ui");
 
-		g_free (ui_filename);
+	if (!builder) {
+		builder = gtk_builder_new ();
+		gtk_builder_add_from_file (builder, "viewer/arv-viewer.ui", 0);
 	}
 
 	viewer->main_window = GTK_WIDGET (gtk_builder_get_object (builder, "main_window"));
@@ -1241,8 +1234,6 @@ activate (GApplication *application)
 	viewer->flip_vertical_toggle = GTK_WIDGET (gtk_builder_get_object (builder, "flip_vertical_togglebutton"));
 	viewer->flip_horizontal_toggle = GTK_WIDGET (gtk_builder_get_object (builder, "flip_horizontal_togglebutton"));
 	viewer->acquisition_button = GTK_WIDGET (gtk_builder_get_object (builder, "acquisition_button"));
-
-	g_object_unref (builder);
 
 	gtk_widget_set_no_show_all (viewer->trigger_combo_box, TRUE);
 
