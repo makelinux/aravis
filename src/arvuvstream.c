@@ -468,7 +468,7 @@ arv_uv_stream_thread_sync (void *data)
 		if (buffer != NULL &&
 		    buffer->priv->status == ARV_BUFFER_STATUS_FILLING &&
 		    offset + size <= buffer->priv->size)
-			packet = buffer->priv->data + offset;
+			packet = (ArvUvspPacket *) (buffer->priv->data + offset);
 		else
 			packet = incoming_buffer;
 
