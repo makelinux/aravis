@@ -27,7 +27,7 @@
 #error "Only <arv.h> can be included directly."
 #endif
 
-#include <arvtypes.h>
+#include <arvbuffer.h>
 
 G_BEGIN_DECLS
 
@@ -48,8 +48,6 @@ typedef enum {
 	ARV_STREAM_CALLBACK_TYPE_BUFFER_DONE
 } ArvStreamCallbackType;
 
-typedef void (*ArvStreamCallback)	(void *user_data, ArvStreamCallbackType type, ArvBuffer *buffer);
-
 #define ARV_TYPE_STREAM             (arv_stream_get_type ())
 G_DECLARE_DERIVABLE_TYPE (ArvStream, arv_stream, ARV, STREAM, GObject)
 
@@ -65,11 +63,13 @@ struct _ArvStreamClass {
 	void        	(*new_buffer)   	(ArvStream *stream);
 };
 
-GType arv_stream_get_type (void);
+//GType arv_stream_get_type (void);
+
+typedef void (*ArvStreamCallback)	(void *user_data, ArvStreamCallbackType type, ArvBuffer *buffer);
 
 void		arv_stream_push_buffer 			(ArvStream *stream, ArvBuffer *empty_buffer);
-
 // return full buffer
+
 ArvBuffer *	arv_stream_pop_buffer			(ArvStream *stream);
 ArvBuffer *	arv_stream_try_pop_buffer		(ArvStream *stream);
 ArvBuffer * 	arv_stream_timeout_pop_buffer 		(ArvStream *stream, guint64 timeout);
