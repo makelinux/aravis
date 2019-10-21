@@ -349,6 +349,15 @@ arv_uv_stream_submit_transfer (ArvUvStreamBufferContext* ctx, struct libusb_tran
 struct _ArvUvStreamPrivate {
 	GThread *thread;
 	ArvUvStreamThreadData *thread_data;
+} ArvUvStreamPrivate;
+
+struct _ArvUvStream {
+	ArvStream	stream;
+	struct _ArvUvStreamPrivate *priv;
+};
+
+struct _ArvUvStreamClass {
+	ArvStreamClass parent_class;
 };
 
 static void *
