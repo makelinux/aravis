@@ -634,6 +634,34 @@ arv_uv_device_get_genicam_xml (ArvDevice *device, size_t *size)
 }
 
 static void
+reset_endpoint (libusb_device_handle *usb_device, guint8 endpoint, guint8 endpoint_flags)
+{
+	int errcode;
+
+	/* Set endpoint in halt condition */
+	errcode = libusb_control_transfer(usb_device,
+					      LIBUSB_ENDPOINT_OUT | LIBUSB_REQUEST_TYPE_STANDARD | LIBUSB_RECIPIENT_ENDPOINT,
+					      LIBUSB_REQUEST_SET_FEATURE,
+					      0, /* Value: 0=endpoint_halt */
+					      endpoint | endpoint_flags,
+					      0, 0,
+					      1000);
+	if (errcode < 0) {
+		arv_warning_device("Failed to set endpoint %x in halt condition: %s",
+				   endpoint|endpoint_flags, libusb_error_name (errcode));
+		return;
+	}
+
+	/* Clear halt condtion on the endpoint, effectivelly resetting the pipe */
+	errcode = libusb_clear_halt(usb_device, endpoint | endpoint_flags);
+	if (errcode < 0) {
+		arv_warning_device("Failed to clear halt contidion on endpoint: %s",
+				   libusb_error_name (errcode));
+		return;
+	}
+}
+
+static void
 _open_usb_device (ArvUvDevice *uv_device)
 {
 	libusb_device **devices;
@@ -781,8 +809,11 @@ arv_uv_device_new (const char *vendor, const char *product, const char *serial_n
 		return NULL;
 	}
 
+	reset_endpoint (uv_device->priv->usb_device, uv_device->priv->data_endpoint, LIBUSB_ENDPOINT_IN);
+
 	event_thread_run = 1;
 	event_thread = g_thread_new( "libusb events", event_thread_func, uv_device->priv->usb );
+
 
 	return ARV_DEVICE (uv_device);
 }
