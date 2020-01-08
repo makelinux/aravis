@@ -20,8 +20,10 @@
  * Author: Emmanuel Pacaud <emmanuel@gnome.org>
  */
 
+#include <assert.h>
 #include <gtk/gtk.h>
 #include <gst/gst.h>
+#include <gst/gstregistry.h>
 #include <gst/app/gstappsrc.h>
 #include <gst/video/videooverlay.h>
 #include <arv.h>
@@ -122,6 +124,7 @@ typedef struct {
 
 	GstElement *pipeline;
 	GstElement *appsrc;
+	GstElement *src;
 	GstElement *transform;
 
 	guint rotation;
@@ -255,6 +258,7 @@ arv_viewer_value_from_log (double value, double min, double max)
 	return pow (10.0, (value * (log10 (max) - log10 (min)) + log10 (min)));
 }
 
+#if 1
 typedef struct {
 	GWeakRef stream;
 	ArvBuffer* arv_buffer;
@@ -363,6 +367,7 @@ new_buffer_cb (ArvStream *stream, ArvViewer *viewer)
 		viewer->n_errors++;
 	}
 }
+#endif
 
 static void
 frame_rate_entry_cb (GtkEntry *entry, ArvViewer *viewer)
@@ -951,8 +956,12 @@ start_video (ArvViewer *viewer)
 	stop_video (viewer);
 
 	viewer->rotation = 0;
+
+	goto no_stream; // aravissrc, no appsrc
+
 	viewer->stream = arv_camera_create_stream (viewer->camera, stream_cb, NULL, NULL);
 	if (!ARV_IS_STREAM (viewer->stream)) {
+
 		g_object_unref (viewer->camera);
 		viewer->camera = NULL;
 		return FALSE;
@@ -979,6 +988,7 @@ start_video (ArvViewer *viewer)
 	for (i = 0; i < 5; i++)
 		arv_stream_push_buffer (viewer->stream, arv_buffer_new (payload, NULL));
 
+no_stream:
 	set_camera_widgets(viewer);
 	pixel_format = arv_camera_get_pixel_format (viewer->camera, NULL);
 
@@ -993,8 +1003,25 @@ start_video (ArvViewer *viewer)
 
 	viewer->pipeline = gst_pipeline_new ("pipeline");
 
-	viewer->appsrc = gst_element_factory_make ("appsrc", NULL);
 	videoconvert = gst_element_factory_make ("videoconvert", NULL);
+	if (!viewer->stream) {
+		assert(!viewer->appsrc);
+		//gst_registry_add_path(gst_registry_get(), "gst/.libs");
+		viewer->src = gst_element_factory_make ("aravissrc", 0);
+		if (!viewer->camera && viewer->src)
+			viewer->camera = ((GstAravis*)viewer->src)->camera;
+		assert(viewer->src);
+		gst_bin_add_many (GST_BIN (viewer->pipeline), viewer->src, videoconvert, NULL);
+		videosink = gst_element_factory_make ("xvimagesink", NULL);
+		gst_bin_add_many (GST_BIN (viewer->pipeline), videosink, NULL);
+		gst_element_link_many (viewer->src, videoconvert, videosink, NULL);
+		gst_element_set_state (viewer->pipeline, GST_STATE_PLAYING);
+
+		return 1;
+	}
+
+	assert(!viewer->src);
+	viewer->appsrc = gst_element_factory_make ("appsrc", NULL);
 	viewer->transform = gst_element_factory_make ("videoflip", NULL);
 
 	gst_bin_add_many (GST_BIN (viewer->pipeline), viewer->appsrc, videoconvert, viewer->transform, NULL);
