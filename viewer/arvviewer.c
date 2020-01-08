@@ -911,6 +911,12 @@ start_video (ArvViewer *viewer)
 
 	viewer->appsrc = gst_element_factory_make ("appsrc", NULL);
 	videoconvert = gst_element_factory_make ("videoconvert", NULL);
+#if 1
+	gst_bin_add_many (GST_BIN (viewer->pipeline), viewer->appsrc, videoconvert, NULL);
+	videosink = gst_element_factory_make ("xvimagesink", NULL);
+	gst_bin_add_many (GST_BIN (viewer->pipeline), videosink, NULL);
+	gst_element_link_many (viewer->appsrc, videoconvert, videosink, NULL);
+#else
 	viewer->transform = gst_element_factory_make ("videoflip", NULL);
 
 	gst_bin_add_many (GST_BIN (viewer->pipeline), viewer->appsrc, videoconvert, viewer->transform, NULL);
@@ -962,6 +968,7 @@ start_video (ArvViewer *viewer)
 		gst_bin_add (GST_BIN (viewer->pipeline), videosink);
 		gst_element_link_many (viewer->transform, videosink, NULL);
 	}
+#endif
 
 	g_object_set(G_OBJECT (videosink), "sync", FALSE, NULL);
 
