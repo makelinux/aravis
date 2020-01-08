@@ -246,6 +246,8 @@ main (int argc, char **argv)
 	GError *error = NULL;
 	int i;
 
+	double min_frame_rate=0,max_frame_rate=0,current_frame_rate=0;
+
 	data.buffer_count = 0;
 	data.chunks = NULL;
 	data.chunk_parser = NULL;
@@ -326,6 +328,9 @@ main (int argc, char **argv)
 		exposure = arv_camera_get_exposure_time (camera, NULL);
 		payload = arv_camera_get_payload (camera, NULL);
 		gain = arv_camera_get_gain (camera, NULL);
+		// Mike: get default frame-rate values from camera
+		arv_camera_get_frame_rate_bounds (camera, &min_frame_rate, &max_frame_rate, NULL);
+		current_frame_rate=arv_camera_get_frame_rate(camera, NULL);
 
 		printf ("vendor name           = %s\n", arv_camera_get_vendor_name (camera, NULL));
 		printf ("model name            = %s\n", arv_camera_get_model_name (camera, NULL));
@@ -337,6 +342,9 @@ main (int argc, char **argv)
 		printf ("payload               = %d bytes\n", payload);
 		printf ("exposure              = %g µs\n", exposure);
 		printf ("gain                  = %d dB\n", gain);
+		printf ("max frame rate        = %g FPS\n",max_frame_rate);
+		printf ("min frame rate        = %g FPS\n",min_frame_rate);
+		printf ("current frame rate    = %g FPS\n",current_frame_rate);
 
 		if (arv_camera_is_gv_device (camera)) {
 			printf ("gv n_stream channels  = %d\n", arv_camera_gv_get_n_stream_channels (camera, NULL));
