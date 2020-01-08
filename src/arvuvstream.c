@@ -38,6 +38,9 @@
 #define ARV_UV_STREAM_MAXIMUM_TRANSFER_SIZE	(1024*1024*1)
 #define ARV_UV_STREAM_MAXIMUM_SUBMIT_TOTAL	(8*1024*1024)
 
+//#define ARV_UV_STREAM_MAXIMUM_TRANSFER_SIZE	(65536)         // from pylon
+//#define ARV_UV_STREAM_MAXIMUM_SUBMIT_TOTAL	(1555200)       // from pylon
+
 static GObjectClass *parent_class = NULL;
 
 struct _ArvUvStreamPrivate {
