@@ -36,6 +36,7 @@
 #include <arvstr.h>
 #include <arvzip.h>
 #include <arvmisc.h>
+#include <libusb.h>
 
 enum
 {
@@ -268,18 +269,22 @@ arv_uv_device_read_memory (ArvDevice *device, guint64 address, guint32 size, voi
 	int i;
 	gint32 block_size;
 	guint data_size_max;
+	gboolean ret;
 
 	data_size_max = priv->ack_packet_size_max - sizeof (ArvUvcpHeader);
 
+	libusb_claim_interface(priv->usb_device, priv->control_interface);
 	for (i = 0; i < (size + data_size_max - 1) / data_size_max; i++) {
 		block_size = MIN (data_size_max, size - i * data_size_max);
-		if (!_read_memory (uv_device,
+		ret = _read_memory (uv_device,
 				   address + i * data_size_max,
-				   block_size, ((char *) buffer) + i * data_size_max, error))
-			return FALSE;
+				   block_size, ((char *) buffer) + i * data_size_max, error);
+		if (!ret)
+			break;
 	}
+	libusb_release_interface(priv->usb_device, priv->control_interface);
 
-	return TRUE;
+	return ret;
 }
 
 static gboolean
@@ -402,18 +407,22 @@ arv_uv_device_write_memory (ArvDevice *device, guint64 address, guint32 size, vo
 	int i;
 	gint32 block_size;
 	guint data_size_max;
+	gboolean ret;
 
 	data_size_max = priv->ack_packet_size_max - sizeof (ArvUvcpHeader);
 
+	libusb_claim_interface(priv->usb_device, priv->control_interface);
 	for (i = 0; i < (size + data_size_max - 1) / data_size_max; i++) {
 		block_size = MIN (data_size_max, size - i * data_size_max);
-		if (!_write_memory (uv_device,
+		ret = _write_memory (uv_device,
 				   address + i * data_size_max,
-				   block_size, ((char *) buffer) + i * data_size_max, error))
-			return FALSE;
+				   block_size, ((char *) buffer) + i * data_size_max, error);
+		if (!ret)
+			break;
 	}
+	libusb_release_interface(priv->usb_device, priv->control_interface);
 
-	return TRUE;
+	return ret;
 }
 
 static gboolean
@@ -821,7 +830,7 @@ arv_uv_device_constructed (GObject *object)
 			 priv->control_endpoint, priv->control_interface);
 	arv_debug_device("[UvDevice::new] Using data endpoint %d, interface %d",
 			 priv->data_endpoint, priv->data_interface);
-
+	/*
 	if (priv->usb_device == NULL ||
 	    libusb_claim_interface (priv->usb_device, priv->control_interface) < 0 ||
 	    libusb_claim_interface (priv->usb_device, priv->data_interface) < 0) {
@@ -830,7 +839,7 @@ arv_uv_device_constructed (GObject *object)
 										 priv->vendor, priv->product, priv->serial_number));
 		return;
 	}
-
+	*/
 	if ( !_bootstrap (uv_device)){
 		arv_device_take_init_error (ARV_DEVICE (uv_device), g_error_new (ARV_DEVICE_ERROR, ARV_DEVICE_ERROR_PROTOCOL_ERROR,
 										 "Failed to bootstrap USB device '%s:%s:%s'",
@@ -879,8 +888,10 @@ arv_uv_device_finalize (GObject *object)
 	g_clear_pointer (&priv->serial_number, g_free);
 	g_clear_pointer (&priv->genicam_xml, g_free);
 	if (priv->usb_device != NULL) {
+		/*
 		libusb_release_interface (priv->usb_device, priv->control_interface);
 		libusb_release_interface (priv->usb_device, priv->data_interface);
+		*/
 		libusb_close (priv->usb_device);
 	}
 	libusb_exit (priv->usb);

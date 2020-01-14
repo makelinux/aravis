@@ -40,6 +40,8 @@
 #include <arvgcstring.h>
 #include <arvstream.h>
 #include <arvdebug.h>
+#include <libusb.h>
+#include <stdio.h>
 
 enum {
 	ARV_DEVICE_SIGNAL_CONTROL_LOST,
