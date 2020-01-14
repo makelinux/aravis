@@ -1177,15 +1177,16 @@ activate (GApplication *application)
 	GError *err = NULL;
 
 	builder = gtk_builder_new ();
+//#define 	ARAVIS_DATA_DIR "viewer/"
+	if (!gtk_builder_add_from_file (builder, "viewer/arv-viewer.ui", 0)) {
+		ui_filename = g_build_filename (ARAVIS_DATA_DIR, "arv-viewer.ui", NULL);
+		if (!gtk_builder_add_from_file (builder, ui_filename, &err)) {
+			g_error ("Cant't load user interface file: %s", err->message);
+			g_error_free (err);
+		}
 
-	ui_filename = g_build_filename (ARAVIS_DATA_DIR, "arv-viewer.ui", NULL);
-
-	if (!gtk_builder_add_from_file (builder, ui_filename, &err)) {
-		g_error ("Cant't load user interface file: %s", err->message);
-		g_error_free (err);
+		g_free (ui_filename);
 	}
-
-	g_free (ui_filename);
 
 	viewer->main_window = GTK_WIDGET (gtk_builder_get_object (builder, "main_window"));
 	viewer->main_stack = GTK_WIDGET (gtk_builder_get_object (builder, "main_stack"));
