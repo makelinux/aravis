@@ -39,6 +39,8 @@
 #include <arvgcstring.h>
 #include <arvstream.h>
 #include <arvdebug.h>
+#include <libusb.h>
+#include <stdio.h>
 
 enum {
 	ARV_DEVICE_SIGNAL_CONTROL_LOST,
@@ -97,15 +99,52 @@ arv_device_create_stream (ArvDevice *device, ArvStreamCallback callback, void *u
  * Since: 0.2.0
  **/
 
+typedef struct {
+	char *vendor;
+	char *product;
+	char *serial_nbr;
+
+	libusb_context *usb;
+	libusb_device_handle *usb_device;
+
+	ArvGc *genicam;
+
+	char *genicam_xml;
+	size_t genicam_xml_size;
+
+	guint16 packet_id;
+
+	guint timeout_ms;
+	guint cmd_packet_size_max;
+	guint ack_packet_size_max;
+	guint control_interface;
+	guint data_interface;
+        guint8 control_endpoint;
+        guint8 data_endpoint;
+	gboolean disconnected;
+} ArvUvDevicePrivate;
+
+struct ArvUvDevice {
+	ArvDevice device;
+
+	ArvUvDevicePrivate *priv;
+};
+
 gboolean
 arv_device_read_memory (ArvDevice *device, guint64 address, guint32 size, void *buffer, GError **error)
 {
+	arv_debug_device("{");
 	g_return_val_if_fail (ARV_IS_DEVICE (device), FALSE);
 	g_return_val_if_fail (buffer != NULL, FALSE);
 	g_return_val_if_fail (size > 0, FALSE);
 	g_return_val_if_fail (error == NULL || *error == NULL, FALSE);
 
-	return ARV_DEVICE_GET_CLASS (device)->read_memory (device, address, size, buffer, error);
+	struct ArvUvDevice *uv_device = (void*)device;
+	libusb_claim_interface(uv_device->priv->usb_device, uv_device->priv->control_interface);
+	gboolean r = ARV_DEVICE_GET_CLASS (device)->read_memory (device, address, size, buffer, error);
+	libusb_release_interface(uv_device->priv->usb_device, uv_device->priv->control_interface);
+	arv_debug_device("}");
+	return r;
 }
 
 /**
@@ -126,12 +165,18 @@ arv_device_read_memory (ArvDevice *device, guint64 address, guint32 size, void *
 gboolean
 arv_device_write_memory (ArvDevice *device, guint64 address, guint32 size, void *buffer, GError **error)
 {
+	arv_debug_device("{");
 	g_return_val_if_fail (ARV_IS_DEVICE (device), FALSE);
 	g_return_val_if_fail (buffer != NULL, FALSE);
 	g_return_val_if_fail (size > 0, FALSE);
 	g_return_val_if_fail (error == NULL || *error == NULL, FALSE);
 
-	return ARV_DEVICE_GET_CLASS (device)->write_memory (device, address, size, buffer, error);
+	struct ArvUvDevice *uv_device = (void*)device;
+	libusb_claim_interface(uv_device->priv->usb_device, uv_device->priv->control_interface);
+	gboolean r = ARV_DEVICE_GET_CLASS (device)->write_memory (device, address, size, buffer, error);
+	libusb_release_interface(uv_device->priv->usb_device, uv_device->priv->control_interface);
+	arv_debug_device("}");
+	return r;
 }
 
 /**

@@ -36,6 +36,7 @@
 #include <arvstr.h>
 #include <arvzip.h>
 #include <arvmisc.h>
+#include <libusb.h>
 
 #define ARV_UV_DEVICE_N_TRIES_MAX	5
 
@@ -721,7 +722,7 @@ arv_uv_device_new (const char *vendor, const char *product, const char *serial_n
 			 uv_device->priv->control_endpoint, uv_device->priv->control_interface);
 	arv_debug_device("[UvDevice::new] Using data endpoint %d, interface %d",
 			 uv_device->priv->data_endpoint, uv_device->priv->data_interface);
-
+	/*
 	if (uv_device->priv->usb_device == NULL ||
 	    libusb_claim_interface (uv_device->priv->usb_device, uv_device->priv->control_interface) < 0 ||
 	    libusb_claim_interface (uv_device->priv->usb_device, uv_device->priv->data_interface) < 0) {
@@ -729,7 +730,7 @@ arv_uv_device_new (const char *vendor, const char *product, const char *serial_n
 		g_object_unref (uv_device);
 		return NULL;
 	}
-
+	*/
 	_bootstrap (uv_device);
 
 	if (!ARV_IS_GC (uv_device->priv->genicam)) {
@@ -767,8 +768,10 @@ arv_uv_device_finalize (GObject *object)
 	g_clear_pointer (&uv_device->priv->product, g_free);
 	g_clear_pointer (&uv_device->priv->serial_nbr, g_free);
 	if (uv_device->priv->usb_device != NULL) {
+		/*
 		libusb_release_interface (uv_device->priv->usb_device, uv_device->priv->control_interface);
 		libusb_release_interface (uv_device->priv->usb_device, uv_device->priv->data_interface);
+		*/
 		libusb_close (uv_device->priv->usb_device);
 	}
 	libusb_exit (uv_device->priv->usb);
