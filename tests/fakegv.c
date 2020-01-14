@@ -92,7 +92,7 @@ acquisition_test (void)
 }
 
 static void
-new_buffer_cb (ArvStream *stream, unsigned *buffer_count)
+fake_new_buffer_cb (ArvStream *stream, unsigned *buffer_count)
 {
 	ArvBuffer *buffer;
 
@@ -129,7 +129,7 @@ stream_test (void)
 	for (i = 0; i < 5; i++)
 		arv_stream_push_buffer (stream, arv_buffer_new (payload, NULL));
 
-	g_signal_connect (stream, "new-buffer", G_CALLBACK (new_buffer_cb), &buffer_count);
+	g_signal_connect (stream, "new-buffer", G_CALLBACK (fake_new_buffer_cb), &buffer_count);
 	arv_stream_set_emit_signals (stream, TRUE);
 
 	arv_camera_start_acquisition (camera, NULL);
@@ -146,7 +146,7 @@ stream_test (void)
 	g_clear_object (&stream);
 
 	/* For actually testing the deadlock condition (see comment in
-	 * new_buffer_cb), one must wait a bit before leaving this test,
+	 * fake_new_buffer_cb), one must wait a bit before leaving this test,
 	 * because otherwise the stream thread will be killed while sleeping. */
 	sleep (2);
 }
@@ -171,7 +171,7 @@ dynamic_roi_test (void)
 
 	payload = arv_camera_get_payload (camera, NULL);
 
-	g_signal_connect (stream, "new-buffer", G_CALLBACK (new_buffer_cb), &buffer_count);
+	g_signal_connect (stream, "new-buffer", G_CALLBACK (fake_new_buffer_cb), &buffer_count);
 	arv_stream_set_emit_signals (stream, TRUE);
 
 	for (j = 0; j < G_N_ELEMENTS (rois); j++) {

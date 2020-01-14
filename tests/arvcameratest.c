@@ -150,7 +150,7 @@ set_cancel (int signal)
 }
 
 static void
-new_buffer_cb (ArvStream *stream, ApplicationData *data)
+test_new_buffer_cb (ArvStream *stream, ApplicationData *data)
 {
 	ArvBuffer *buffer;
 
@@ -403,7 +403,7 @@ main (int argc, char **argv)
 
 			arv_camera_start_acquisition (camera, NULL);
 
-			g_signal_connect (stream, "new-buffer", G_CALLBACK (new_buffer_cb), &data);
+			g_signal_connect (stream, "new-buffer", G_CALLBACK (test_new_buffer_cb), &data);
 			arv_stream_set_emit_signals (stream, TRUE);
 
 			g_signal_connect (arv_camera_get_device (camera), "control-lost",

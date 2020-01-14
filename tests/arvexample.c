@@ -17,7 +17,7 @@ set_cancel (int signal)
 }
 
 static void
-new_buffer_cb (ArvStream *stream, ApplicationData *data)
+exam_new_buffer_cb (ArvStream *stream, ApplicationData *data)
 {
 	ArvBuffer *buffer;
 
@@ -90,7 +90,7 @@ main (int argc, char **argv)
 			arv_camera_start_acquisition (camera, NULL);
 
 			/* Connect the new-buffer signal */
-			g_signal_connect (stream, "new-buffer", G_CALLBACK (new_buffer_cb), &data);
+			g_signal_connect (stream, "new-buffer", G_CALLBACK (exam_new_buffer_cb), &data);
 			/* And enable emission of this signal (it's disabled by default for performance reason) */
 			arv_stream_set_emit_signals (stream, TRUE);
 
