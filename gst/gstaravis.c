@@ -255,7 +255,7 @@ gst_aravis_set_caps (GstBaseSrc *src, GstCaps *caps)
                 g_object_set (gst_aravis->stream, "packet-resend", ARV_GV_STREAM_PACKET_RESEND_NEVER, NULL);
 
 	for (i = 0; i < gst_aravis->num_buffers; i++)
-		arv_stream_push_buffer (gst_aravis->stream,
+		arv_stream_push_buffer (gst_aravis->stream, // push new empty to input
 					arv_buffer_new (gst_aravis->payload, NULL));
 
 	GST_LOG_OBJECT (gst_aravis, "Start acquisition");
@@ -361,6 +361,7 @@ gst_aravis_create (GstPushSrc * push_src, GstBuffer ** buffer)
 	gst_aravis = GST_ARAVIS (push_src);
 
 	do {
+		// get full buffer
 		arv_buffer = arv_stream_timeout_pop_buffer (gst_aravis->stream, gst_aravis->buffer_timeout_us);
 		if (arv_buffer != NULL && arv_buffer_get_status (arv_buffer) != ARV_BUFFER_STATUS_SUCCESS)
 			arv_stream_push_buffer (gst_aravis->stream, arv_buffer);
@@ -406,7 +407,7 @@ gst_aravis_create (GstPushSrc * push_src, GstBuffer ** buffer)
 		gst_aravis->last_timestamp = timestamp_ns;
 	}
 
-	arv_stream_push_buffer (gst_aravis->stream, arv_buffer);
+	arv_stream_push_buffer (gst_aravis->stream, arv_buffer); // push empty
 
 	return GST_FLOW_OK;
 }

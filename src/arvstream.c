@@ -50,8 +50,8 @@ enum {
 static GObjectClass *parent_class = NULL;
 
 struct _ArvStreamPrivate {
-	GAsyncQueue *input_queue;
-	GAsyncQueue *output_queue;
+	GAsyncQueue *input_queue; // empty buffers
+	GAsyncQueue *output_queue; // full buffers
 #if GLIB_CHECK_VERSION(2,32,0)
 	GRecMutex mutex;
 #else
@@ -64,7 +64,7 @@ struct _ArvStreamPrivate {
 /**
  * arv_stream_push_buffer:
  * @stream: a #ArvStream
- * @buffer: (transfer full): buffer to push
+ * @empty_buffer: (transfer full): empty buffer to push
  *
  * Pushes a #ArvBuffer to the @stream thread. The @stream takes ownership of @buffer,
  * and will free all the buffers still in its queues when destroyed.
@@ -93,7 +93,7 @@ arv_stream_push_buffer (ArvStream *stream, ArvBuffer *buffer)
  *
  * This method is thread safe.
  *
- * Returns: (transfer full): a #ArvBuffer
+ * Returns: (transfer full): a full #ArvBuffer
  *
  * Since: 0.2.0
  */
@@ -116,7 +116,7 @@ arv_stream_pop_buffer (ArvStream *stream)
  *
  * This method is thread safe.
  *
- * Returns: (transfer full): a #ArvBuffer, NULL if no buffer is available.
+ * Returns: (transfer full): a full #ArvBuffer, NULL if no buffer is available.
  *
  * Since: 0.2.0
  */
@@ -139,7 +139,7 @@ arv_stream_try_pop_buffer (ArvStream *stream)
  *
  * This method is thread safe.
  *
- * Returns: (transfer full): a #ArvBuffer, NULL if no buffer is available until the timeout occurs.
+ * Returns: (transfer full): a full #ArvBuffer, NULL if no buffer is available until the timeout occurs.
  *
  * Since: 0.2.0
  */
@@ -167,7 +167,7 @@ arv_stream_timeout_pop_buffer (ArvStream *stream, guint64 timeout)
  * arv_stream_pop_input_buffer: (skip)
  * @stream: (transfer full): a #ArvStream
  *
- * Pops a buffer from the input queue of @stream.
+ * Pops an empty buffer from the input queue of @stream.
  *
  * Since: 0.2.0
  */
