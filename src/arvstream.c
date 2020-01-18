@@ -33,6 +33,7 @@
 #include <arvstreamprivate.h>
 #include <arvbuffer.h>
 #include <arvdebug.h>
+#include <math.h>
 
 enum {
 	ARV_STREAM_SIGNAL_NEW_BUFFER,
@@ -79,7 +80,16 @@ arv_stream_push_buffer (ArvStream *stream, ArvBuffer *buffer)
 {
 	g_return_if_fail (ARV_IS_STREAM (stream));
 	g_return_if_fail (ARV_IS_BUFFER (buffer));
-
+	// see system_timestamp_ns
+	if (arv_buffer_get_system_timestamp(buffer)) {
+		float latency = 1e-9*(g_get_real_time () * 1000LL - arv_buffer_get_system_timestamp(buffer));
+		static float p;
+		if (!p || fabs((latency-p)/p) > 0.1) {
+			trl_();
+			trvf(latency);
+			p = latency;
+		}
+	}
 	g_async_queue_push (stream->priv->input_queue, buffer);
 }
 
