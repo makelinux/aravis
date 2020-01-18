@@ -20,8 +20,10 @@
  * Author: Emmanuel Pacaud <emmanuel@gnome.org>
  */
 
+#include <assert.h>
 #include <gtk/gtk.h>
 #include <gst/gst.h>
+#include <gst/gstregistry.h>
 #include <gst/app/gstappsrc.h>
 #include <gst/video/videooverlay.h>
 #include <arv.h>
@@ -122,6 +124,7 @@ typedef struct {
 
 	GstElement *pipeline;
 	GstElement *appsrc;
+	GstElement *src;
 	GstElement *transform;
 
 	guint rotation;
@@ -241,6 +244,7 @@ arv_viewer_value_from_log (double value, double min, double max)
 	return pow (10.0, (value * (log10 (max) - log10 (min)) + log10 (min)));
 }
 
+#if 1
 typedef struct {
 	GWeakRef stream;
 	ArvBuffer* arv_buffer;
@@ -336,6 +340,7 @@ new_buffer_cb (ArvStream *stream, ArvViewer *viewer)
 		arv_stream_push_buffer (stream, arv_buffer);
 	}
 }
+#endif
 
 static void
 frame_rate_entry_cb (GtkEntry *entry, ArvViewer *viewer)
@@ -807,6 +812,9 @@ start_video (ArvViewer *viewer)
 	stop_video (viewer);
 
 	viewer->rotation = 0;
+
+	goto no_stream; // aravissrc, no appsrc
+
 	viewer->stream = arv_camera_create_stream (viewer->camera, stream_cb, NULL);
 	if (viewer->stream == NULL) {
 		g_object_unref (viewer->camera);
@@ -834,7 +842,7 @@ start_video (ArvViewer *viewer)
 	payload = arv_camera_get_payload (viewer->camera);
 	for (i = 0; i < 5; i++)
 		arv_stream_push_buffer (viewer->stream, arv_buffer_new (payload, NULL));
-
+no_stream:
 	arv_camera_get_region (viewer->camera, NULL, NULL, &width, &height);
 	pixel_format = arv_camera_get_pixel_format (viewer->camera);
 	arv_camera_get_exposure_time_bounds (viewer->camera, &viewer->exposure_min, &viewer->exposure_max);
@@ -909,14 +917,23 @@ start_video (ArvViewer *viewer)
 
 	viewer->pipeline = gst_pipeline_new ("pipeline");
 
-	viewer->appsrc = gst_element_factory_make ("appsrc", NULL);
 	videoconvert = gst_element_factory_make ("videoconvert", NULL);
-#if 1
-	gst_bin_add_many (GST_BIN (viewer->pipeline), viewer->appsrc, videoconvert, NULL);
-	videosink = gst_element_factory_make ("xvimagesink", NULL);
-	gst_bin_add_many (GST_BIN (viewer->pipeline), videosink, NULL);
-	gst_element_link_many (viewer->appsrc, videoconvert, videosink, NULL);
-#else
+	if (!viewer->stream) {
+		assert(!viewer->appsrc);
+		//gst_registry_add_path(gst_registry_get(), "gst/.libs");
+		gst_plugin_load_file("./gst/.libs/libgstaravis.0.6.so", 0);
+		viewer->src = gst_element_factory_make ("aravissrc", 0);
+		gst_bin_add_many (GST_BIN (viewer->pipeline), viewer->src, videoconvert, 0);
+		videosink = gst_element_factory_make ("xvimagesink", 0);
+		gst_bin_add_many (GST_BIN (viewer->pipeline), videosink, 0);
+		gst_element_link_many (viewer->src, videoconvert, videosink, 0);
+		gst_element_set_state (viewer->pipeline, GST_STATE_PLAYING);
+
+		return 1;
+	}
+
+	assert(!viewer->src);
+	viewer->appsrc = gst_element_factory_make ("appsrc", NULL);
 	viewer->transform = gst_element_factory_make ("videoflip", NULL);
 
 	gst_bin_add_many (GST_BIN (viewer->pipeline), viewer->appsrc, videoconvert, viewer->transform, NULL);
@@ -968,7 +985,6 @@ start_video (ArvViewer *viewer)
 		gst_bin_add (GST_BIN (viewer->pipeline), videosink);
 		gst_element_link_many (viewer->transform, videosink, NULL);
 	}
-#endif
 
 	g_object_set(G_OBJECT (videosink), "sync", FALSE, NULL);
 
