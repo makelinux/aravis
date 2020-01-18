@@ -709,6 +709,25 @@ update_status_bar_cb (void *data)
 	guint n_bytes = viewer->n_bytes;
 	guint n_errors = viewer->n_errors;
 
+	gint empties, loads;
+	arv_stream_get_n_buffers (stream, &empties, &loads);
+	guint64 n_completed_buffers;
+	guint64 n_failures;
+	guint64 n_underruns;
+	arv_stream_get_statistics (stream, &n_completed_buffers, &n_failures, &n_underruns);
+	ArvStreamStatistics * st = arv_stream_get_statistics2 (stream);
+	if (!st)
+		return FALSE;
+	n_images = n_completed_buffers;
+	if (!empties)
+		trvd_(empties);
+	if (loads > 2)
+		trvd_(loads);
+	if (n_failures)
+		trvd_(n_failures);
+	trvd_(n_underruns);
+	trln();
+
 	if (elapsed_time_ms == 0)
 		return TRUE;
 
@@ -1004,6 +1023,14 @@ no_stream:
 		gst_bin_add_many (GST_BIN (viewer->pipeline), videosink, NULL);
 		gst_element_link_many (viewer->src, videoconvert, videosink, NULL);
 		gst_element_set_state (viewer->pipeline, GST_STATE_PLAYING);
+
+		viewer->last_status_bar_update_time_ms = g_get_real_time () / 1000;
+		viewer->last_n_images = 0;
+		viewer->last_n_bytes = 0;
+		viewer->n_images = 0;
+		viewer->n_bytes = 0;
+		viewer->n_errors = 0;
+		viewer->status_bar_update_event = g_timeout_add_seconds (1, update_status_bar_cb, viewer);
 
 		return 1;
 	}

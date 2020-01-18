@@ -48,6 +48,13 @@ typedef enum {
 	ARV_STREAM_CALLBACK_TYPE_BUFFER_DONE
 } ArvStreamCallbackType;
 
+typedef struct {
+	guint n_completed_buffers;
+	guint n_failures;
+	guint n_underruns;
+	double latency;
+} ArvStreamStatistics;
+
 #define ARV_TYPE_STREAM             (arv_stream_get_type ())
 G_DECLARE_DERIVABLE_TYPE (ArvStream, arv_stream, ARV, STREAM, GObject)
 
@@ -58,6 +65,7 @@ struct _ArvStreamClass {
 	void		(*stop_thread)		(ArvStream *stream);
 	void		(*get_statistics)	(ArvStream *stream, guint64 *n_completed_buffers,
 						 guint64 *n_failures, guint64 *n_underruns);
+	ArvStreamStatistics *(*get_statistics2)(ArvStream *stream);
 
 	/* signals */
 	void        	(*new_buffer)   	(ArvStream *stream);
@@ -77,6 +85,7 @@ void 		arv_stream_get_n_buffers 		(ArvStream *stream,
 void		arv_stream_start_thread			(ArvStream *stream);
 unsigned int	arv_stream_stop_thread			(ArvStream *stream, gboolean delete_buffers);
 
+ArvStreamStatistics * arv_stream_get_statistics2		(ArvStream *stream);
 void		arv_stream_get_statistics		(ArvStream *stream,
 							 guint64 *n_completed_buffers,
 							 guint64 *n_failures,
