@@ -1215,13 +1215,13 @@ select_mode (ArvViewer *viewer, ArvViewerMode mode)
 			break;
 	}
 
-	gtk_widget_set_visible (viewer->back_button, video_visibility);
+	/*gtk_widget_set_visible (viewer->back_button, video_visibility);
 	gtk_widget_set_visible (viewer->rotate_cw_button, video_visibility);
 	gtk_widget_set_visible (viewer->flip_vertical_toggle, video_visibility);
 	gtk_widget_set_visible (viewer->flip_horizontal_toggle, video_visibility);
 	gtk_widget_set_visible (viewer->snapshot_button, video_visibility);
-	gtk_widget_set_visible (viewer->acquisition_button, video_visibility);
-
+	gtk_widget_set_visible (viewer->acquisition_button, video_visibility);*/
+	gtk_widget_set_visible (viewer->main_headerbar, video_visibility);
 }
 
 void
