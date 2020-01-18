@@ -86,8 +86,12 @@ arv_stream_push_buffer (ArvStream *stream, ArvBuffer *buffer)
 		static float p;
 		if (!p || fabs((latency-p)/p) > 0.1) {
 			trl_();
-			trvf(latency);
+			trvf_(latency);
 			p = latency;
+			gint empty_buffers, full_buffers;
+			arv_stream_get_n_buffers (stream, &empty_buffers, &full_buffers);
+			trvd_(empty_buffers);
+			trvd(full_buffers);
 		}
 	}
 	g_async_queue_push (stream->priv->input_queue, buffer);
