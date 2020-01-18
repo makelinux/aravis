@@ -1359,6 +1359,9 @@ activate (GApplication *application)
 	gtk_widget_set_sensitive (viewer->camera_parameters, FALSE);
 	select_mode (viewer, ARV_VIEWER_MODE_CAMERA_LIST);
 	update_device_list_cb (GTK_TOOL_BUTTON (viewer->refresh_button), viewer);
+
+	start_camera(viewer, NULL);
+	select_mode(viewer, ARV_VIEWER_MODE_VIDEO); //calls start_video
 }
 
 static void
@@ -1381,7 +1384,9 @@ static void
 finalize (GObject *object)
 {
 	ArvViewer *viewer = (ArvViewer *) object;
-
+#if !ORIG
+	stop_video(viewer);
+#endif
 	G_OBJECT_CLASS (arv_viewer_parent_class)->finalize (object);
 
 	g_clear_object (&viewer->notification);
