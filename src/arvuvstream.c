@@ -34,6 +34,7 @@
 #include <arvmisc.h>
 #include <libusb.h>
 #include <string.h>
+#include <math.h>
 
 #define ARV_UV_STREAM_MAXIMUM_TRANSFER_SIZE	(1024*1024*1)
 #define ARV_UV_STREAM_MAXIMUM_SUBMIT_TOTAL	(8*1024*1024)
@@ -138,7 +139,19 @@ void arv_uv_stream_leader_cb (struct libusb_transfer *transfer)
 				&ctx->buffer->priv->x_offset, &ctx->buffer->priv->y_offset);
 			ctx->buffer->priv->pixel_format = arv_uvsp_packet_get_pixel_format (packet);
 			ctx->buffer->priv->frame_id = arv_uvsp_packet_get_frame_id (packet);
+			//trvd(ctx->buffer->priv->timestamp_ns);
+			static guint64 prev;
 			ctx->buffer->priv->timestamp_ns = arv_uvsp_packet_get_timestamp (packet);
+			float interval = 1e-9*(ctx->buffer->priv->timestamp_ns - prev);
+			float rate =  1 / interval;
+			prev = ctx->buffer->priv->timestamp_ns;
+			static float p;
+			if (!p || fabs((interval-p)/p) > 0.01) {
+				trl_();
+				trvf_(interval);
+				trvf(rate);
+				p = interval;
+			}
 			break;
 		default:
 			arv_warning_stream_thread ("Leader transfer failed: transfer->status = %d", transfer->status);
