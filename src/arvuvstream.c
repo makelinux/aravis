@@ -369,7 +369,7 @@ arv_uv_stream_thread_async (void *data)
 
 	while (!g_atomic_int_get (&thread_data->cancel)) {
 
-		buffer = arv_stream_pop_input_buffer (thread_data->stream);
+		buffer = arv_stream_pop_input_buffer (thread_data->stream); // get empty buffer
 
 		if( buffer == NULL ) {
 			thread_data->stats.n_underruns += 1;
@@ -397,6 +397,7 @@ arv_uv_stream_thread_async (void *data)
 		ctx->total_payload_transferred = 0;
 		buffer->priv->status = ARV_BUFFER_STATUS_FILLING;
 
+		// submit empty
 		arv_uv_stream_submit_transfer (ctx, ctx->leader_transfer, &thread_data->cancel);
 
 		for (i = 0; i < ctx->num_payload_transfers; ++i) {
