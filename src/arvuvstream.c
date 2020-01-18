@@ -379,6 +379,12 @@ arv_uv_stream_thread_async (void *data)
 
 		if( buffer == NULL ) {
 			thread_data->statistics.n_underruns += 1;
+			// get empty buffer
+			while (!(buffer = arv_stream_pop_input_buffer(thread_data->stream)) &&
+			       !g_atomic_int_get (&thread_data->cancel))
+				usleep(10000);
+
+			trlvd(thread_data->statistics.n_underruns);
 #if 0 // arv_stream_push_buffer needs to notify us...
 			g_mutex_lock (&thread_data->stream_mtx);
 			g_cond_wait (&thread_data->stream_event, &thread_data->stream_mtx);
@@ -386,7 +392,8 @@ arv_uv_stream_thread_async (void *data)
 #else
 			//usleep( 1 );
 #endif
-			continue;
+			if (!buffer)
+				continue;
 		}
 
 		ArvUvStreamBufferContext* ctx = g_hash_table_lookup( ctx_lookup, buffer );
@@ -727,6 +734,12 @@ arv_uv_stream_finalize (GObject *object)
 				  thread_data->statistics.n_failures);
 		arv_debug_stream ("[UvStream::finalize] n_underruns            = %u",
 				  thread_data->statistics.n_underruns);
+
+		trlvd(thread_data->statistics.n_completed_buffers);
+		trlvd(thread_data->statistics.n_failures);
+		trlvd(thread_data->statistics.n_underruns);
+		float fails_ratio = thread_data->statistics.n_failures / (thread_data->statistics.n_completed_buffers + thread_data->statistics.n_failures);
+		trlvd(fails_ratio);
 
 		g_atomic_int_set (&thread_data->cancel, TRUE);
 		g_cond_broadcast (&thread_data->stream_event);
