@@ -1,6 +1,7 @@
 include $(top_srcdir)/Makefile.decl
 
 AM_CPPFLAGS = \
+	-DCTRACER_ON -include ctracer.h \
 	-I$(top_srcdir)/src/ \
 	-DPACKAGE_LOCALE_DIR=\""$(prefix)/$(DATADIRNAME)/locale"\" \
 	-DPACKAGE_SRC_DIR=\""$(srcdir)"\" \
