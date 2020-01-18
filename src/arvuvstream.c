@@ -41,12 +41,6 @@
 /* Acquisition thread */
 
 typedef struct {
-	guint n_completed_buffers;
-	guint n_failures;
-	guint n_underruns;
-} ArvStreamStatistics;
-
-typedef struct {
 	ArvStream *stream;
 
 	ArvUvDevice *uv_device;
@@ -783,9 +777,13 @@ arv_uv_stream_get_statistics (ArvStream *stream,
 	*n_underruns = thread_data->stats.n_underruns;
 }
 
-	ArvUvStream *uv_stream = ARV_UV_STREAM (stream);
-	ArvUvStreamPrivate *priv = arv_uv_stream_get_instance_private (uv_stream);
-	return &priv->thread_data->stats;
+ArvStreamStatistics * arv_uv_stream_get_statistics2(ArvStream *stream)
+{
+   ArvUvStream *uv_stream = ARV_UV_STREAM (stream);
+   ArvUvStreamPrivate *priv = arv_uv_stream_get_instance_private (uv_stream);
+   return &priv->thread_data->stats;
+}
+
 static void
 arv_uv_stream_init (ArvUvStream *uv_stream)
 {
@@ -841,4 +839,5 @@ arv_uv_stream_class_init (ArvUvStreamClass *uv_stream_class)
 	stream_class->start_thread = arv_uv_stream_start_thread;
 	stream_class->stop_thread = arv_uv_stream_stop_thread;
 	stream_class->get_statistics = arv_uv_stream_get_statistics;
+	stream_class->get_statistics2 = arv_uv_stream_get_statistics2;
 }

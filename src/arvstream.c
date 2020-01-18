@@ -35,6 +35,7 @@
 #include <arvdevice.h>
 #include <arvdebug.h>
 #include <gio/gio.h>
+#include <math.h>
 
 enum {
 	ARV_STREAM_SIGNAL_NEW_BUFFER,
@@ -91,6 +92,18 @@ arv_stream_push_buffer (ArvStream *stream, ArvBuffer *buffer)
 	g_return_if_fail (ARV_IS_STREAM (stream));
 	g_return_if_fail (ARV_IS_BUFFER (buffer));
 
+	// see system_timestamp_ns
+	if (arv_buffer_get_system_timestamp(buffer)) {
+		static float latency;
+		latency = 0.1 * 1e-9*(g_get_real_time () * 1000LL - arv_buffer_get_system_timestamp(buffer))
+			+ 0.9 * latency;
+		static float p;
+		if (!p || fabs((latency-p)/p) > 0.1) {
+			p = latency;
+			ArvStreamStatistics * st = arv_stream_get_statistics2(stream);
+			st->latency = latency;
+		}
+	}
 	g_async_queue_push (priv->input_queue, buffer);
 }
 
@@ -355,6 +368,16 @@ arv_stream_get_statistics (ArvStream *stream,
 	stream_class = ARV_STREAM_GET_CLASS (stream);
 	if (stream_class->get_statistics != NULL)
 		stream_class->get_statistics (stream, n_completed_buffers, n_failures, n_underruns);
+}
+
+ArvStreamStatistics * arv_stream_get_statistics2(ArvStream *stream)
+{
+	g_return_val_if_fail(ARV_IS_STREAM(stream), NULL);
+
+	ArvStreamClass *stream_class = ARV_STREAM_GET_CLASS (stream);
+	if (!stream_class->get_statistics2)
+		return NULL;
+	return stream_class->get_statistics2(stream);
 }
 
 /**
