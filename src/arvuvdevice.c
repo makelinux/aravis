@@ -809,7 +809,7 @@ arv_uv_device_new (const char *vendor, const char *product, const char *serial_n
 		return NULL;
 	}
 
-	reset_endpoint (uv_device->priv->usb_device, uv_device->priv->data_endpoint, LIBUSB_ENDPOINT_IN);
+	//reset_endpoint (uv_device->priv->usb_device, uv_device->priv->data_endpoint, LIBUSB_ENDPOINT_IN);
 
 	event_thread_run = 1;
 	event_thread = g_thread_new( "libusb events", event_thread_func, uv_device->priv->usb );
