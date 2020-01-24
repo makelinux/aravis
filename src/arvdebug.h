@@ -23,6 +23,9 @@
 #ifndef ARV_DEBUG_H
 #define ARV_DEBUG_H
 
+#define CTRACER_ON
+#include <ctracer.h>
+
 #if !defined (ARV_H_INSIDE) && !defined (ARAVIS_COMPILATION)
 #error "Only <arv.h> can be included directly."
 #endif
