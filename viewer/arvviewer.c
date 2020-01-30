@@ -259,7 +259,7 @@ arv_viewer_value_from_log (double value, double min, double max)
 	return pow (10.0, (value * (log10 (max) - log10 (min)) + log10 (min)));
 }
 
-#if 1
+#if 0
 typedef struct {
 	GWeakRef stream;
 	ArvBuffer* arv_buffer;
@@ -705,6 +705,7 @@ stream_cb (void *user_data, ArvStreamCallbackType type, ArvBuffer *buffer)
 			g_warning ("Failed to make stream thread high priority");
 	}
 }
+#endif
 
 static gboolean
 update_status_bar_cb (void *data)
@@ -934,6 +935,7 @@ stop_video (ArvViewer *viewer)
 	}
 }
 
+#if 0
 static GstBusSyncReply
 bus_sync_handler (GstBus *bus, GstMessage *message, gpointer user_data)
 {
@@ -955,6 +957,7 @@ bus_sync_handler (GstBus *bus, GstMessage *message, gpointer user_data)
 
 	return GST_BUS_DROP;
 }
+#endif
 
 static gboolean
 start_video (ArvViewer *viewer)
@@ -976,7 +979,7 @@ start_video (ArvViewer *viewer)
 	viewer->rotation = 0;
 
 	goto no_stream; // aravissrc, no appsrc
-
+#if 0
 	viewer->stream = arv_camera_create_stream (viewer->camera, stream_cb, NULL, NULL);
 	if (!ARV_IS_STREAM (viewer->stream)) {
 
@@ -1005,7 +1008,7 @@ start_video (ArvViewer *viewer)
 	payload = arv_camera_get_payload (viewer->camera, NULL);
 	for (i = 0; i < 5; i++)
 		arv_stream_push_buffer (viewer->stream, arv_buffer_new (payload, NULL));
-
+#endif
 no_stream:
 	set_camera_widgets(viewer);
 	pixel_format = arv_camera_get_pixel_format (viewer->camera, NULL);
@@ -1045,7 +1048,7 @@ no_stream:
 
 		return 1;
 	}
-
+#if 0
 	assert(!viewer->src);
 	viewer->appsrc = gst_element_factory_make ("appsrc", NULL);
 	viewer->transform = gst_element_factory_make ("videoflip", NULL);
@@ -1134,6 +1137,7 @@ no_stream:
 
 	g_signal_connect (viewer->stream, "new-buffer", G_CALLBACK (new_buffer_cb), viewer);
 
+#endif
 	return TRUE;
 }
 
@@ -1369,10 +1373,12 @@ activate (GApplication *application)
 	g_signal_connect (viewer->video_mode_button, "clicked", G_CALLBACK (switch_to_video_mode_cb), viewer);
 	g_signal_connect (viewer->back_button, "clicked", G_CALLBACK (switch_to_camera_list_cb), viewer);
 	g_signal_connect (viewer->main_window, "destroy", G_CALLBACK (arv_viewer_quit_cb), viewer);
+#if 0
 	g_signal_connect (viewer->snapshot_button, "clicked", G_CALLBACK (snapshot_cb), viewer);
 	g_signal_connect (viewer->rotate_cw_button, "clicked", G_CALLBACK (rotate_cw_cb), viewer);
 	g_signal_connect (viewer->flip_horizontal_toggle, "clicked", G_CALLBACK (flip_horizontal_cb), viewer);
 	g_signal_connect (viewer->flip_vertical_toggle, "clicked", G_CALLBACK (flip_vertical_cb), viewer);
+#endif
 	g_signal_connect (viewer->frame_rate_entry, "activate", G_CALLBACK (frame_rate_entry_cb), viewer);
 	g_signal_connect (viewer->frame_rate_entry, "focus-out-event", G_CALLBACK (frame_rate_entry_focus_cb), viewer);
 
