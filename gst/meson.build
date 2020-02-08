@@ -8,8 +8,10 @@ gst_headers = [
 	'gstaravis.h'
 ]
 
+link_args = ['-g']
 gst_c_args = [
 	'-DPACKAGE_LOCALE_DIR=@0@'.format(get_option ('prefix')),
+	'-g',
 	'-DG_LOG_DOMAIN="Aravis"'
 ]
 
