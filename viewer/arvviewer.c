@@ -38,6 +38,7 @@
 #include <gdk/gdkwin32.h>  // for GDK_WINDOW_HWND
 #endif
 
+#if ORIG
 static gboolean has_autovideo_sink = FALSE;
 static gboolean has_gtksink = FALSE;
 static gboolean has_gtkglsink = FALSE;
@@ -114,6 +115,7 @@ gstreamer_plugin_check (void)
 
 	return check_success;
 }
+#endif
 
 typedef struct {
 	GtkApplication parent_instance;
@@ -138,6 +140,7 @@ typedef struct {
 
 	GtkWidget *main_window;
 	GtkWidget *main_stack;
+#if ORIG
 	GtkWidget *main_headerbar;
 	GtkWidget *camera_box;
 	GtkWidget *refresh_button;
@@ -158,6 +161,7 @@ typedef struct {
 	GtkWidget *camera_height;
 	GtkWidget *video_box;
 	GtkWidget *video_frame;
+#endif
 	GtkWidget *fps_label;
 	GtkWidget *image_label;
 	GtkWidget *trigger_combo_box;
@@ -259,7 +263,8 @@ arv_viewer_value_from_log (double value, double min, double max)
 	return pow (10.0, (value * (log10 (max) - log10 (min)) + log10 (min)));
 }
 
-#if 0
+//#define ORIG 1
+#if ORIG
 typedef struct {
 	GWeakRef stream;
 	ArvBuffer* arv_buffer;
@@ -604,6 +609,7 @@ set_camera_widgets(ArvViewer *viewer)
 	g_signal_handler_unblock (viewer->auto_exposure_toggle, viewer->auto_exposure_clicked);
 }
 
+#if ORIG
 void
 snapshot_cb (GtkButton *button, ArvViewer *viewer)
 {
@@ -711,6 +717,9 @@ static gboolean
 update_status_bar_cb (void *data)
 {
 	ArvViewer *viewer = data;
+	ArvStream *stream = 0;
+	if (viewer->src)
+		stream = ((GstAravis*)viewer->src)->stream;
 	char *text;
 	gint64 time_ms = g_get_real_time () / 1000;
 	gint64 elapsed_time_ms = time_ms - viewer->last_status_bar_update_time_ms;
@@ -897,6 +906,7 @@ remove_widget (GtkWidget *widget, gpointer data)
 	gtk_container_remove (data, widget);
 	g_object_unref (widget);
 }
+#endif
 
 static void
 stop_video (ArvViewer *viewer)
@@ -904,6 +914,7 @@ stop_video (ArvViewer *viewer)
 	if (GST_IS_PIPELINE (viewer->pipeline))
 		gst_element_set_state (viewer->pipeline, GST_STATE_NULL);
 
+#if ORIG
 	if (ARV_IS_STREAM (viewer->stream))
 		arv_stream_set_emit_signals (viewer->stream, FALSE);
 
@@ -913,6 +924,7 @@ stop_video (ArvViewer *viewer)
 	viewer->appsrc = NULL;
 
 	g_clear_object (&viewer->last_buffer);
+#endif
 
 	if (ARV_IS_CAMERA (viewer->camera))
 		arv_camera_stop_acquisition (viewer->camera, NULL);
@@ -935,7 +947,7 @@ stop_video (ArvViewer *viewer)
 	}
 }
 
-#if 0
+#if ORIG
 static GstBusSyncReply
 bus_sync_handler (GstBus *bus, GstMessage *message, gpointer user_data)
 {
@@ -971,15 +983,14 @@ start_video (ArvViewer *viewer)
 	gint width, height;
 	const char *caps_string;
 
-	if (!ARV_IS_CAMERA (viewer->camera))
-		return FALSE;
+	//if (!ARV_IS_CAMERA (viewer->camera))
+	//	return FALSE;
 
 	stop_video (viewer);
 
 	viewer->rotation = 0;
 
-	goto no_stream; // aravissrc, no appsrc
-#if 0
+#if ORIG
 	viewer->stream = arv_camera_create_stream (viewer->camera, stream_cb, NULL, NULL);
 	if (!ARV_IS_STREAM (viewer->stream)) {
 
@@ -1009,15 +1020,14 @@ start_video (ArvViewer *viewer)
 	for (i = 0; i < 5; i++)
 		arv_stream_push_buffer (viewer->stream, arv_buffer_new (payload, NULL));
 #endif
-no_stream:
 	set_camera_widgets(viewer);
 	pixel_format = arv_camera_get_pixel_format (viewer->camera, NULL);
 
 	caps_string = arv_pixel_format_to_gst_caps_string (pixel_format);
 	if (caps_string == NULL) {
 		g_message ("GStreamer cannot understand the camera pixel format: 0x%x!\n", (int) pixel_format);
-		stop_video (viewer);
-		return FALSE;
+		//stop_video (viewer);
+		//return FALSE;
 	}
 
 	arv_camera_start_acquisition (viewer->camera, NULL);
@@ -1048,7 +1058,7 @@ no_stream:
 
 		return 1;
 	}
-#if 0
+#if ORIG
 	assert(!viewer->src);
 	viewer->appsrc = gst_element_factory_make ("appsrc", NULL);
 	viewer->transform = gst_element_factory_make ("videoflip", NULL);
@@ -1141,6 +1151,7 @@ no_stream:
 	return TRUE;
 }
 
+#if ORIG
 static gboolean
 select_camera_list_mode (gpointer user_data)
 {
@@ -1185,6 +1196,7 @@ start_camera (ArvViewer *viewer, const char *camera_id)
 
 	if (!ARV_IS_CAMERA (viewer->camera))
 		return FALSE;
+#endif
 
 	arv_device_set_register_cache_policy (arv_camera_get_device (viewer->camera), viewer->cache_policy);
 
@@ -1192,7 +1204,7 @@ start_camera (ArvViewer *viewer, const char *camera_id)
 
 	gtk_widget_set_sensitive (viewer->camera_parameters, TRUE);
 
-	arv_camera_set_chunk_mode (viewer->camera, FALSE, NULL);
+	//arv_camera_set_chunk_mode (viewer->camera, FALSE, NULL);
 
 	update_camera_region (viewer);
 
@@ -1203,7 +1215,7 @@ start_camera (ArvViewer *viewer, const char *camera_id)
 	n_valid_formats = 0;
 	pixel_format_strings = arv_camera_dup_available_pixel_formats_as_strings (viewer->camera, &n_pixel_format_strings, NULL);
 	pixel_formats = arv_camera_dup_available_pixel_formats (viewer->camera, &n_pixel_formats, NULL);
-	g_assert (n_pixel_formats == n_pixel_format_strings);
+	//g_assert (n_pixel_formats == n_pixel_format_strings);
 	pixel_format_string = arv_camera_get_pixel_format_as_string (viewer->camera, NULL);
 	for (i = 0; i < n_pixel_formats; i++) {
 		if (arv_pixel_format_to_gst_caps_string (pixel_formats[i]) != NULL) {
@@ -1252,8 +1264,8 @@ select_mode (ArvViewer *viewer, ArvViewerMode mode)
 	char *subtitle;
 	gint width, height, x, y;
 
-	if (!ARV_IS_CAMERA (viewer->camera))
-		mode = ARV_VIEWER_MODE_CAMERA_LIST;
+	//if (!ARV_IS_CAMERA (viewer->camera))
+	//	mode = ARV_VIEWER_MODE_CAMERA_LIST;
 
 	switch (mode) {
 		case ARV_VIEWER_MODE_CAMERA_LIST:
@@ -1302,12 +1314,17 @@ switch_to_video_mode_cb (GtkToolButton *button, ArvViewer *viewer)
 {
 	select_mode (viewer, ARV_VIEWER_MODE_VIDEO);
 }
+#endif
 
 void
 arv_viewer_quit_cb (GtkApplicationWindow *window, ArvViewer *viewer)
 {
 	trl();
+#if ORIG
 	stop_camera (viewer);
+#else
+	stop_video(viewer);
+#endif
 	g_application_quit (G_APPLICATION (viewer));
 }
 
@@ -1332,6 +1349,7 @@ activate (GApplication *application)
 
 	viewer->main_window = GTK_WIDGET (gtk_builder_get_object (builder, "main_window"));
 	viewer->main_stack = GTK_WIDGET (gtk_builder_get_object (builder, "main_stack"));
+#ifdef ORIG
 	viewer->main_headerbar = GTK_WIDGET (gtk_builder_get_object (builder, "main_headerbar"));
 	viewer->camera_box = GTK_WIDGET (gtk_builder_get_object (builder, "camera_box"));
 	viewer->refresh_button = GTK_WIDGET (gtk_builder_get_object (builder, "refresh_button"));
@@ -1359,21 +1377,22 @@ activate (GApplication *application)
 	viewer->gain_hscale = GTK_WIDGET (gtk_builder_get_object (builder, "gain_hscale"));
 	viewer->auto_exposure_toggle = GTK_WIDGET (gtk_builder_get_object (builder, "auto_exposure_togglebutton"));
 	viewer->auto_gain_toggle = GTK_WIDGET (gtk_builder_get_object (builder, "auto_gain_togglebutton"));
+#ifdef ORIG
 	viewer->rotate_cw_button = GTK_WIDGET (gtk_builder_get_object (builder, "rotate_cw_button"));
 	viewer->flip_vertical_toggle = GTK_WIDGET (gtk_builder_get_object (builder, "flip_vertical_togglebutton"));
 	viewer->flip_horizontal_toggle = GTK_WIDGET (gtk_builder_get_object (builder, "flip_horizontal_togglebutton"));
 	viewer->acquisition_button = GTK_WIDGET (gtk_builder_get_object (builder, "acquisition_button"));
 
 	gtk_widget_set_no_show_all (viewer->trigger_combo_box, TRUE);
+#endif
 
 	gtk_widget_show_all (viewer->main_window);
 
 	gtk_application_add_window (GTK_APPLICATION (application), GTK_WINDOW (viewer->main_window));
-
+	g_signal_connect (viewer->main_window, "destroy", G_CALLBACK (arv_viewer_quit_cb), viewer);
 	g_signal_connect (viewer->refresh_button, "clicked", G_CALLBACK (update_device_list_cb), viewer);
 	g_signal_connect (viewer->video_mode_button, "clicked", G_CALLBACK (switch_to_video_mode_cb), viewer);
 	g_signal_connect (viewer->back_button, "clicked", G_CALLBACK (switch_to_camera_list_cb), viewer);
-	g_signal_connect (viewer->main_window, "destroy", G_CALLBACK (arv_viewer_quit_cb), viewer);
 #if 0
 	g_signal_connect (viewer->snapshot_button, "clicked", G_CALLBACK (snapshot_cb), viewer);
 	g_signal_connect (viewer->rotate_cw_button, "clicked", G_CALLBACK (rotate_cw_cb), viewer);
@@ -1383,10 +1402,10 @@ activate (GApplication *application)
 	g_signal_connect (viewer->frame_rate_entry, "activate", G_CALLBACK (frame_rate_entry_cb), viewer);
 	g_signal_connect (viewer->frame_rate_entry, "focus-out-event", G_CALLBACK (frame_rate_entry_focus_cb), viewer);
 
+#if ORIG
 	if (!has_gtksink && !has_gtkglsink) {
 		g_signal_connect (viewer->video_frame, "realize", G_CALLBACK (video_frame_realize_cb), viewer);
 	}
-
 	viewer->camera_selected = g_signal_connect (gtk_tree_view_get_selection (GTK_TREE_VIEW (viewer->camera_tree)), "changed",
 						    G_CALLBACK (camera_selection_changed_cb), viewer);
 	viewer->exposure_spin_changed = g_signal_connect (viewer->exposure_spin_button, "value-changed",
@@ -1420,8 +1439,11 @@ activate (GApplication *application)
 	select_mode (viewer, ARV_VIEWER_MODE_CAMERA_LIST);
 	update_device_list_cb (GTK_TOOL_BUTTON (viewer->refresh_button), viewer);
 
-	start_camera(viewer, NULL);
-	select_mode(viewer, ARV_VIEWER_MODE_VIDEO); //calls start_video
+#if !ORIG
+	//start_camera(viewer, NULL);
+	//select_mode(viewer, ARV_VIEWER_MODE_VIDEO); //calls start_video
+	start_video (viewer);
+#endif
 }
 
 static void

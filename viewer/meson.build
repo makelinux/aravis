@@ -31,7 +31,7 @@ viewer_resources = gnome.compile_resources (
 executable ('arv-viewer-@0@'.format (aravis_api_version),
 	    viewer_sources, viewer_headers, viewer_resources,
 	    link_with: aravis_library,
-	    c_args: viewer_c_args,
+	    c_args: viewer_c_args + ['-DORIG=1'],
 	    link_args: link_args,
 	    include_directories: [library_inc],
 	    dependencies: viewer_deps,
