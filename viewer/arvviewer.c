@@ -1452,10 +1452,18 @@ finalize (GObject *object)
 	g_clear_object (&viewer->notification);
 }
 
+ArvViewer *arv_viewer;
+
+static void set_cancel (int s)
+{
+	signal(SIGINT, 0);
+	//arv_viewer_quit_cb(0, arv_viewer);
+	g_signal_emit_by_name(arv_viewer->main_window, "destroy");
+}
+
 ArvViewer *
 arv_viewer_new (void)
 {
-  ArvViewer *arv_viewer;
 
   if (!gstreamer_plugin_check ())
 	  return NULL;
@@ -1467,6 +1475,8 @@ arv_viewer_new (void)
 			     "flags", G_APPLICATION_NON_UNIQUE,
 			     "inactivity-timeout", 30000,
 			     NULL);
+  signal (SIGINT, set_cancel);
+
 
   return arv_viewer;
 }
