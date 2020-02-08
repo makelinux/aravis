@@ -877,7 +877,7 @@ arv_uv_device_finalize (GObject *object)
 {
 	ArvUvDevice *uv_device = ARV_UV_DEVICE (object);
 	ArvUvDevicePrivate *priv = arv_uv_device_get_instance_private (uv_device);
-
+	trlm("{");
 	event_thread_run = 0;
 	g_thread_join( event_thread );
 
@@ -895,8 +895,9 @@ arv_uv_device_finalize (GObject *object)
 		libusb_close (priv->usb_device);
 	}
 	libusb_exit (priv->usb);
-
+	trl();
 	G_OBJECT_CLASS (arv_uv_device_parent_class)->finalize (object);
+	trlm("}");
 }
 
 static void

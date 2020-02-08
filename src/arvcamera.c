@@ -1528,7 +1528,6 @@ void
 arv_camera_set_gain (ArvCamera *camera, double gain, GError **error)
 {
 	ArvCameraPrivate *priv = arv_camera_get_instance_private (camera);
-
 	g_return_if_fail (ARV_IS_CAMERA (camera));
 
 	if (gain < 0)
