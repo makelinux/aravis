@@ -104,14 +104,19 @@ int mode_sync;
 static void
 arv_uv_stream_buffer_context_wait_transfer_completed (ArvUvStreamBufferContext* ctx)
 {
+	//trlvx(ctx->buffer);
 	g_mutex_lock( ctx->transfer_completed_mtx );
+	//trlvd(ctx->num_submitted);
 	g_cond_wait( ctx->transfer_completed_event, ctx->transfer_completed_mtx );
+	//trlvd(ctx->num_submitted);
 	g_mutex_unlock( ctx->transfer_completed_mtx );
+	//trlvx(ctx->buffer);
 }
 
 static void
 arv_uv_stream_buffer_context_notify_transfer_completed (ArvUvStreamBufferContext* ctx)
 {
+	//trlvx(ctx->buffer);
 	g_mutex_lock( ctx->transfer_completed_mtx );
 	g_cond_broadcast( ctx->transfer_completed_event );
 	g_mutex_unlock( ctx->transfer_completed_mtx );
@@ -159,9 +164,12 @@ void arv_uv_stream_leader_cb (struct libusb_transfer *transfer)
 			break;
 	}
 
+	//trlvd(ctx->num_submitted);
 	g_atomic_int_dec_and_test (&ctx->num_submitted);
+	//trlvd(ctx->num_submitted);
 	g_atomic_int_add (ctx->total_submitted_bytes, -transfer->length);
 	arv_uv_stream_buffer_context_notify_transfer_completed (ctx);
+	//trlvx(ctx->buffer);
 }
 
 void arv_uv_stream_trailer_cb (struct libusb_transfer *transfer)
@@ -205,9 +213,12 @@ void arv_uv_stream_trailer_cb (struct libusb_transfer *transfer)
 
 	arv_stream_push_output_buffer (ctx->stream, ctx->buffer);
 
+	//trlvd(ctx->num_submitted);
 	g_atomic_int_dec_and_test( &ctx->num_submitted );
+	//trlvd(ctx->num_submitted);
 	g_atomic_int_add (ctx->total_submitted_bytes, -transfer->length);
 	arv_uv_stream_buffer_context_notify_transfer_completed (ctx);
+	//trlvx(ctx->buffer);
 }
 
 void arv_uv_stream_payload_cb (struct libusb_transfer *transfer)
@@ -224,7 +235,9 @@ void arv_uv_stream_payload_cb (struct libusb_transfer *transfer)
 			break;
 	}
 
+	//trlvd(ctx->num_submitted);
 	g_atomic_int_dec_and_test( &ctx->num_submitted );
+	//trlvd(ctx->num_submitted);
 	g_atomic_int_add (ctx->total_submitted_bytes, -transfer->length);
 	arv_uv_stream_buffer_context_notify_transfer_completed (ctx);
 }
@@ -243,6 +256,7 @@ arv_uv_stream_buffer_context_new (ArvBuffer *buffer, ArvUvStreamThreadData *thre
 
 	ctx->leader_buffer = g_malloc (thread_data->leader_size);
 	ctx->leader_transfer = libusb_alloc_transfer (0);
+	//trlvx(ctx->buffer);
 	arv_uv_device_fill_bulk_transfer (ctx->leader_transfer, thread_data->uv_device,
 		ARV_UV_ENDPOINT_DATA, LIBUSB_ENDPOINT_IN,
 		ctx->leader_buffer, thread_data->leader_size,
@@ -297,6 +311,7 @@ arv_uv_stream_buffer_context_cancel (gpointer key, gpointer value, gpointer user
 
 	while (ctx->num_submitted > 0)
 	{
+		//trlvd(ctx->num_submitted);
 		arv_uv_stream_buffer_context_wait_transfer_completed (ctx);
 	}
 }
@@ -334,7 +349,9 @@ arv_uv_stream_submit_transfer (ArvUvStreamBufferContext* ctx, struct libusb_tran
 		switch (status)
 		{
 		case LIBUSB_SUCCESS:
+			//trlvd(ctx->num_submitted);
 			g_atomic_int_inc (&ctx->num_submitted);
+			//trlvd(ctx->num_submitted);
 			g_atomic_int_add (ctx->total_submitted_bytes, transfer->length);
 			return;
 
@@ -384,7 +401,7 @@ arv_uv_stream_thread_async (void *data)
 			       !g_atomic_int_get (&thread_data->cancel))
 				usleep(10000);
 
-			trlvd(thread_data->statistics.n_underruns);
+			//trlvd(thread_data->statistics.n_underruns);
 #if 0 // arv_stream_push_buffer needs to notify us...
 			g_mutex_lock (&thread_data->stream_mtx);
 			g_cond_wait (&thread_data->stream_event, &thread_data->stream_mtx);
