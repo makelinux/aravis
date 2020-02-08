@@ -832,7 +832,7 @@ static void
 arv_uv_device_finalize (GObject *object)
 {
 	ArvUvDevice *uv_device = ARV_UV_DEVICE (object);
-
+	trlm("{");
 	event_thread_run = 0;
 	g_thread_join( event_thread );
 
@@ -850,8 +850,9 @@ arv_uv_device_finalize (GObject *object)
 		libusb_close (uv_device->priv->usb_device);
 	}
 	libusb_exit (uv_device->priv->usb);
-
+	trl();
 	G_OBJECT_CLASS (arv_uv_device_parent_class)->finalize (object);
+	trlm("}");
 }
 
 static void

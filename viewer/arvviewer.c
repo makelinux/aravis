@@ -1296,6 +1296,7 @@ switch_to_video_mode_cb (GtkToolButton *button, ArvViewer *viewer)
 void
 arv_viewer_quit_cb (GtkApplicationWindow *window, ArvViewer *viewer)
 {
+	trl();
 	stop_camera (viewer);
 	g_application_quit (G_APPLICATION (viewer));
 }

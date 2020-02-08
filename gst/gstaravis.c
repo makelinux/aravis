@@ -170,14 +170,18 @@ gst_aravis_set_caps (GstBaseSrc *src, GstCaps *caps)
 	gst_structure_get_int (structure, "height", &height);
 	gst_structure_get_int (structure, "depth", &depth);
 	gst_structure_get_int (structure, "bpp", &bpp);
+	trlvd(bpp);
+	trlvd(depth);
 	frame_rate = gst_structure_get_value (structure, "framerate");
 	format_string = gst_structure_get_string (structure, "format");
+	trvs(format_string);
 
 	pixel_format = arv_pixel_format_from_gst_caps (gst_structure_get_name (structure), format_string, bpp, depth);
 
 	arv_camera_set_region (gst_aravis->camera, gst_aravis->offset_x, gst_aravis->offset_y, width, height, NULL);
 	arv_camera_set_binning (gst_aravis->camera, gst_aravis->h_binning, gst_aravis->v_binning, NULL);
 	arv_camera_set_pixel_format (gst_aravis->camera, pixel_format, NULL);
+	trlvx(ARV_PIXEL_FORMAT_BIT_PER_PIXEL(pixel_format));
 
 	if (arv_camera_is_gv_device (gst_aravis->camera)) {
 		if (gst_aravis->packet_size > 0)
@@ -511,7 +515,7 @@ gst_aravis_set_property (GObject * object, guint prop_id,
 			 const GValue * value, GParamSpec * pspec)
 {
 	GstAravis *gst_aravis = GST_ARAVIS (object);
-
+	trl();
 	switch (prop_id) {
 		case PROP_CAMERA_NAME:
 			g_free (gst_aravis->camera_name);

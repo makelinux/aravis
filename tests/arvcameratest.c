@@ -146,6 +146,7 @@ static gboolean cancel = FALSE;
 static void
 set_cancel (int signal)
 {
+	trl();
 	cancel = TRUE;
 }
 
@@ -191,6 +192,7 @@ test_new_buffer_cb (ArvStream *stream, ApplicationData *data)
 static void
 stream_cb (void *user_data, ArvStreamCallbackType type, ArvBuffer *buffer)
 {
+	trlvd(type);
 	if (type == ARV_STREAM_CALLBACK_TYPE_INIT) {
 		if (arv_option_realtime) {
 			if (!arv_make_thread_realtime (10))
@@ -430,11 +432,15 @@ main (int argc, char **argv)
 			printf ("Failures          = %llu\n", (unsigned long long) n_failures);
 			printf ("Underruns         = %llu\n", (unsigned long long) n_underruns);
 
+			trl();
+			sleep(1);
+			trl();
 			arv_camera_stop_acquisition (camera, NULL);
-
+			trl();
 			arv_stream_set_emit_signals (stream, FALSE);
-
+			trl();
 			g_object_unref (stream);
+			trl();
 		} else
 			printf ("Can't create stream thread (check if the device is not already used)\n");
 
