@@ -645,6 +645,9 @@ gst_aravis_class_init (GstAravisClass * klass)
 	gobject_class->finalize = gst_aravis_finalize;
 	gobject_class->set_property = gst_aravis_set_property;
 	gobject_class->get_property = gst_aravis_get_property;
+	trvp(klass);
+	trvp(GST_BASE_SRC_CLASS(gst_aravis_parent_class));
+	trvp(gst_aravis_parent_class);
 
 	g_object_class_install_property
 		(gobject_class,

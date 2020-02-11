@@ -36,6 +36,49 @@
 #ifdef GDK_WINDOWING_WIN32
 #include <gdk/gdkwin32.h>  // for GDK_WINDOW_HWND
 #endif
+#include <gst/video/video-info.h>
+#include <gst/video/video.h>
+#include <gst/video/gstvideofilter.h>
+#include <gst/gststructure.h>
+#include "../gst/gstaravis.h"
+
+static gboolean
+_event (GstBaseSrc * src, GstEvent * event)
+{
+	gdouble x, y;
+
+	const GstStructure *s;
+	const gchar *type;
+	switch (GST_EVENT_TYPE (event)) {
+	case GST_EVENT_NAVIGATION:
+		s = gst_event_get_structure (event);
+		type = gst_structure_get_string (s, "event");
+		if (g_str_equal(type, "mouse-move")) {
+			break;
+		}
+		gst_structure_get_double (s, "pointer_x", &x);
+		gst_structure_get_double (s, "pointer_y", &y);
+		trvs_(type);
+		trvf_(x);
+		trvf_(y);
+		/*
+		   gint fps_n, fps_d;
+		   gint fps_n, fps_d;
+		   GstVideoInfo *info = &GST_VIDEO_FILTER (src)->in_info;
+		   fps_n = GST_VIDEO_INFO_FPS_N (info);
+		   fps_d = GST_VIDEO_INFO_FPS_D (info);
+		   trvd_(fps_n);
+		   trvd_(fps_d);
+		 */
+		trln();
+		if (g_str_equal (type, "mouse-button-press")) {
+		} else if (g_str_equal (type, "mouse-button-release")) {
+		}
+		break;
+	default:;
+	}
+	return ((GstBaseSrcClass*)g_type_class_peek_parent(GST_BASE_SRC_GET_CLASS(src)))->event(src, event);
+}
 
 #if ORIG
 static gboolean has_autovideo_sink = FALSE;
@@ -1028,6 +1071,12 @@ start_video (ArvViewer *viewer)
 		viewer->src = gst_element_factory_make ("aravissrc", 0);
 		if (!viewer->camera && viewer->src)
 			viewer->camera = ((GstAravis*)viewer->src)->camera;
+		GST_BASE_SRC_GET_CLASS(viewer->src)->event = GST_DEBUG_FUNCPTR (_event);
+		trvp(GST_BASE_SRC_CLASS(&((GstAravisClass*)GST_BASE_SRC_GET_CLASS(viewer->src))->parent_class));
+		trvp(&(((GstAravisClass*)GST_BASE_SRC_GET_CLASS(viewer->src))->parent_class.parent_class));
+		trvp(GST_BASE_SRC_GET_CLASS(GST_BASE_SRC_GET_CLASS(viewer->src)));
+		trvp(g_type_class_peek_parent(GST_BASE_SRC_GET_CLASS(viewer->src)));
+
 		assert(viewer->src);
 		gst_bin_add_many (GST_BIN (viewer->pipeline), viewer->src, videoconvert, NULL);
 		videosink = gst_element_factory_make ("xvimagesink", NULL);
