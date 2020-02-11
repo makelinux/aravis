@@ -1019,8 +1019,6 @@ start_video (ArvViewer *viewer)
 		//return FALSE;
 	}
 
-	arv_camera_start_acquisition (viewer->camera, NULL);
-
 	viewer->pipeline = gst_pipeline_new ("pipeline");
 
 	videoconvert = gst_element_factory_make ("videoconvert", NULL);
@@ -1136,6 +1134,7 @@ start_video (ArvViewer *viewer)
 	viewer->status_bar_update_event = g_timeout_add_seconds (1, update_status_bar_cb, viewer);
 
 	g_signal_connect (viewer->stream, "new-buffer", G_CALLBACK (new_buffer_cb), viewer);
+	arv_camera_start_acquisition (viewer->camera, NULL);
 
 #endif
 	return TRUE;
