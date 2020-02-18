@@ -1008,6 +1008,14 @@ bus_sync_handler (GstBus *bus, GstMessage *message, gpointer user_data)
 }
 #endif
 
+GstElement *add_link(GstElement *p, GstElement *src, GstElement *dest)
+{
+	gst_bin_add(GST_BIN(p), dest);
+	if (src)
+		gst_element_link(src, dest);
+	return dest;
+}
+
 static gboolean
 start_video (ArvViewer *viewer)
 {
@@ -1066,6 +1074,8 @@ start_video (ArvViewer *viewer)
 
 	videoconvert = gst_element_factory_make ("videoconvert", NULL);
 	if (!viewer->stream) {
+		GstElement *last;
+
 		assert(!viewer->appsrc);
 		//gst_registry_add_path(gst_registry_get(), "gst/.libs");
 		viewer->src = gst_element_factory_make ("aravissrc", 0);
@@ -1078,10 +1088,11 @@ start_video (ArvViewer *viewer)
 		trvp(g_type_class_peek_parent(GST_BASE_SRC_GET_CLASS(viewer->src)));
 
 		assert(viewer->src);
-		gst_bin_add_many (GST_BIN (viewer->pipeline), viewer->src, videoconvert, NULL);
+		last = add_link(viewer->pipeline, 0, viewer->src);
+		last = add_link(viewer->pipeline, last, videoconvert);
 		videosink = gst_element_factory_make ("xvimagesink", NULL);
-		gst_bin_add_many (GST_BIN (viewer->pipeline), videosink, NULL);
-		gst_element_link_many (viewer->src, videoconvert, videosink, NULL);
+		add_link(viewer->pipeline, last, videosink);
+
 		gst_element_set_state (viewer->pipeline, GST_STATE_PLAYING);
 
 		viewer->last_status_bar_update_time_ms = g_get_real_time () / 1000;
