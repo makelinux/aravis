@@ -1382,6 +1382,7 @@ void
 arv_viewer_quit_cb (GtkApplicationWindow *window, ArvViewer *viewer)
 {
 	trl();
+	alarm(1);
 #if ORIG
 	stop_camera (viewer);
 #else
