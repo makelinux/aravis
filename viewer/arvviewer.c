@@ -1082,6 +1082,7 @@ start_video (ArvViewer *viewer)
 		assert(!viewer->appsrc);
 		//gst_registry_add_path(gst_registry_get(), "gst/.libs");
 		viewer->src = gst_element_factory_make ("aravissrc", 0);
+		//viewer->src = gst_element_factory_make ("videotestsrc", 0);
 		if (!viewer->camera && viewer->src)
 			viewer->camera = ((GstAravis*)viewer->src)->camera;
 		GST_BASE_SRC_GET_CLASS(viewer->src)->event = GST_DEBUG_FUNCPTR (_event);
@@ -1093,7 +1094,19 @@ start_video (ArvViewer *viewer)
 		assert(viewer->src);
 		last = add_link(viewer->pipeline, 0, viewer->src);
 		last = add_link(viewer->pipeline, last, videoconvert);
+#if 0
+		videosink = gst_element_factory_make ("gtksink", NULL);
+		GtkWidget *video_widget;
+		g_object_get(videosink, "widget", &video_widget, NULL);
+		gtk_container_add (GTK_CONTAINER(viewer->video_frame), video_widget);
+		gtk_widget_show(video_widget);
+#else
 		videosink = gst_element_factory_make ("xvimagesink", NULL);
+		//videosink = gst_element_factory_make ("autovideosink", NULL); // works with videotestsrc
+		//GstBus_autoptr bus = gst_pipeline_get_bus (GST_PIPELINE (viewer->pipeline));
+		//gst_bus_set_sync_handler (bus, (GstBusSyncHandler) bus_sync_handler, viewer, NULL);
+		// Next: video_frame_realize_cb, bus_sync_handler
+#endif
 		add_link(viewer->pipeline, last, videosink);
 
 		gst_element_set_state (viewer->pipeline, GST_STATE_PLAYING);
