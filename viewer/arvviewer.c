@@ -1384,12 +1384,15 @@ void
 arv_viewer_quit_cb (GtkApplicationWindow *window, ArvViewer *viewer)
 {
 	trl();
+	alarm(10);
 #if ORIG
 	stop_camera (viewer);
 #else
+	gst_element_send_event (viewer->pipeline, gst_event_new_eos ());
+	sleep(1);
 	stop_video(viewer);
 #endif
-	g_application_quit (G_APPLICATION (viewer));
+	g_application_quit (G_APPLICATION (viewer)); // stops g_application_run
 }
 
 static void
