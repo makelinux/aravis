@@ -590,12 +590,22 @@ auto_gain_cb (GtkToggleButton *toggle, ArvViewer *viewer)
 static void
 set_camera_widgets(ArvViewer *viewer)
 {
+	if (!viewer->camera && viewer->src)
+		viewer->camera = ((GstAravis*)viewer->src)->camera;
+	if (!viewer->camera)
+		return;
+	static int done;
+	if (done)
+		return;
+	done = 1;
 	g_signal_handler_block (viewer->gain_hscale, viewer->gain_hscale_changed);
 	g_signal_handler_block (viewer->gain_spin_button, viewer->gain_spin_changed);
 	g_signal_handler_block (viewer->exposure_hscale, viewer->exposure_hscale_changed);
 	g_signal_handler_block (viewer->exposure_spin_button, viewer->exposure_spin_changed);
 
 	arv_camera_get_exposure_time_bounds (viewer->camera, &viewer->exposure_min, &viewer->exposure_max, NULL);
+	viewer->exposure_max = MIN(100000, viewer->exposure_max);
+
 	gtk_spin_button_set_range (GTK_SPIN_BUTTON (viewer->exposure_spin_button),
 				   viewer->exposure_min, viewer->exposure_max);
 	gtk_spin_button_set_increments (GTK_SPIN_BUTTON (viewer->exposure_spin_button), 200.0, 1000.0);
@@ -604,26 +614,23 @@ set_camera_widgets(ArvViewer *viewer)
 	gtk_spin_button_set_range (GTK_SPIN_BUTTON (viewer->gain_spin_button), gain_min, gain_max);
 	gtk_spin_button_set_increments (GTK_SPIN_BUTTON (viewer->gain_spin_button), 1, 10);
 
-	gtk_range_set_range (GTK_RANGE (viewer->exposure_hscale), 0.0, 1.0);
 	gtk_range_set_range (GTK_RANGE (viewer->gain_hscale), gain_min, gain_max);
 
-	gboolean is_frame_rate_available;
-	is_frame_rate_available = arv_camera_is_frame_rate_available (viewer->camera, NULL);
-	gtk_widget_set_sensitive (viewer->frame_rate_entry, is_frame_rate_available);
+	gtk_widget_set_sensitive (viewer->frame_rate_entry,
+				  arv_camera_is_frame_rate_available (viewer->camera, NULL));
 
 	g_autofree char *string;
 	string = g_strdup_printf ("%g", arv_camera_get_frame_rate (viewer->camera, NULL));
 	gtk_entry_set_text (GTK_ENTRY (viewer->frame_rate_entry), string);
 
-	gboolean is_gain_available;
-	is_gain_available = arv_camera_is_gain_available (viewer->camera, NULL);
-	gtk_widget_set_sensitive (viewer->gain_hscale, is_gain_available);
-	gtk_widget_set_sensitive (viewer->gain_spin_button, is_gain_available);
+	gboolean ga = arv_camera_is_gain_available (viewer->camera, NULL);
+	gtk_widget_set_sensitive (viewer->gain_hscale, ga);
+	gtk_widget_set_sensitive (viewer->gain_spin_button, ga);
 
-	gboolean is_exposure_available;
-	is_exposure_available = arv_camera_is_exposure_time_available (viewer->camera, NULL);
-	gtk_widget_set_sensitive (viewer->exposure_hscale, is_exposure_available);
-	gtk_widget_set_sensitive (viewer->exposure_spin_button, is_exposure_available);
+	gboolean sa = arv_camera_is_exposure_time_available (viewer->camera, NULL);
+	gtk_range_set_range (GTK_RANGE (viewer->exposure_hscale), 0.0, 1.0);
+	gtk_widget_set_sensitive (viewer->exposure_hscale, sa);
+	gtk_widget_set_sensitive (viewer->exposure_spin_button, sa);
 
 	g_signal_handler_unblock (viewer->gain_hscale, viewer->gain_hscale_changed);
 	g_signal_handler_unblock (viewer->gain_spin_button, viewer->gain_spin_changed);
@@ -763,6 +770,7 @@ update_status_bar_cb (void *data)
 	ArvStream *stream = 0;
 	if (viewer->src)
 		stream = ((GstAravis*)viewer->src)->stream;
+	set_camera_widgets(viewer);
 	char *text;
 	gint64 time_ms = g_get_real_time () / 1000;
 	gint64 elapsed_time_ms = time_ms - viewer->last_status_bar_update_time_ms;
@@ -1062,8 +1070,8 @@ start_video (ArvViewer *viewer)
 	payload = arv_camera_get_payload (viewer->camera, NULL);
 	for (i = 0; i < 5; i++)
 		arv_stream_push_buffer (viewer->stream, arv_buffer_new (payload, NULL));
-#endif
 	set_camera_widgets(viewer);
+#endif
 	pixel_format = arv_camera_get_pixel_format (viewer->camera, NULL);
 
 	caps_string = arv_pixel_format_to_gst_caps_string (pixel_format);
@@ -1083,8 +1091,6 @@ start_video (ArvViewer *viewer)
 		//gst_registry_add_path(gst_registry_get(), "gst/.libs");
 		viewer->src = gst_element_factory_make ("aravissrc", 0);
 		//viewer->src = gst_element_factory_make ("videotestsrc", 0);
-		if (!viewer->camera && viewer->src)
-			viewer->camera = ((GstAravis*)viewer->src)->camera;
 		GST_BASE_SRC_GET_CLASS(viewer->src)->event = GST_DEBUG_FUNCPTR (_event);
 		trvp(GST_BASE_SRC_CLASS(&((GstAravisClass*)GST_BASE_SRC_GET_CLASS(viewer->src))->parent_class));
 		trvp(&(((GstAravisClass*)GST_BASE_SRC_GET_CLASS(viewer->src))->parent_class.parent_class));
@@ -1110,7 +1116,6 @@ start_video (ArvViewer *viewer)
 		add_link(viewer->pipeline, last, videosink);
 
 		gst_element_set_state (viewer->pipeline, GST_STATE_PLAYING);
-
 		viewer->last_status_bar_update_time_ms = g_get_real_time () / 1000;
 		viewer->last_n_images = 0;
 		viewer->last_n_bytes = 0;
@@ -1118,7 +1123,7 @@ start_video (ArvViewer *viewer)
 		viewer->n_bytes = 0;
 		viewer->n_errors = 0;
 		viewer->status_bar_update_event = g_timeout_add_seconds (1, update_status_bar_cb, viewer);
-
+		gtk_window_set_keep_above(GTK_WINDOW (viewer->main_window), True);
 		return 1;
 	}
 #if ORIG
