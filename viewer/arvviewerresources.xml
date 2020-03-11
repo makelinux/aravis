@@ -6,4 +6,7 @@
     <file>icons/gnome/scalable/devices/aravis-usb3vision-symbolic.svg</file>
     <file>icons/gnome/scalable/devices/aravis-fake-symbolic.svg</file>
   </gresource>
+  <gresource prefix="/org/argos/viewer">
+    <file compressed="true">argos.ui</file>
+  </gresource>
 </gresources>
