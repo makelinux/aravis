@@ -43,6 +43,8 @@
 #include <gst/gststructure.h>
 #include "../gst/gstaravis.h"
 
+//#define ORIG 1
+
 static gboolean
 _event (GstBaseSrc * src, GstEvent * event)
 {
@@ -306,7 +308,6 @@ arv_viewer_value_from_log (double value, double min, double max)
 	return pow (10.0, (value * (log10 (max) - log10 (min)) + log10 (min)));
 }
 
-//#define ORIG 1
 #if ORIG
 typedef struct {
 	GWeakRef stream;
@@ -763,25 +764,22 @@ stream_cb (void *user_data, ArvStreamCallbackType type, ArvBuffer *buffer)
 }
 #endif
 
+
 static gboolean
-update_status_bar_cb (void *data)
+update_status_cb (void *data)
 {
 	ArvViewer *viewer = data;
 	ArvStream *stream = 0;
+	gtk_window_set_keep_above(GTK_WINDOW (viewer->main_window), True);
 	if (viewer->src)
 		stream = ((GstAravis*)viewer->src)->stream;
 	set_camera_widgets(viewer);
-	char *text;
-	gint64 time_ms = g_get_real_time () / 1000;
-	gint64 elapsed_time_ms = time_ms - viewer->last_status_bar_update_time_ms;
-	guint n_images = viewer->n_images;
-	guint n_bytes = viewer->n_bytes;
 	guint n_errors = viewer->n_errors;
 
 	ArvStreamStatistics * st = arv_stream_get_statistics2 (viewer->stream);
 	if (!st)
 		return FALSE;
-	n_images = n_completed_buffers;
+	g_string_append_printf(s, "internal latency: %d ms\n", st->latency_ms);
 	if (!empties)
 		trvd_(empties);
 
@@ -794,6 +792,20 @@ update_status_bar_cb (void *data)
 		trvd_(loads);
 	trvd_(n_underruns);
 	trln();
+	return TRUE;
+}
+
+#if ORIG
+static gboolean
+update_status_bar_cb (void *data)
+{
+	ArvViewer *viewer = data;
+	char *text;
+	gint64 time_ms = g_get_real_time () / 1000;
+	gint64 elapsed_time_ms = time_ms - viewer->last_status_bar_update_time_ms;
+	guint n_images = viewer->n_images;
+	guint n_bytes = viewer->n_bytes;
+	guint n_errors = viewer->n_errors;
 
 	if (elapsed_time_ms == 0)
 		return TRUE;
@@ -980,7 +992,9 @@ stop_video (ArvViewer *viewer)
 	if (ARV_IS_CAMERA (viewer->camera))
 		arv_camera_stop_acquisition (viewer->camera, NULL);
 
+#if ORIG
 	gtk_container_foreach (GTK_CONTAINER (viewer->video_frame), remove_widget, viewer->video_frame);
+#endif
 
 	if (viewer->status_bar_update_event > 0) {
 		g_source_remove (viewer->status_bar_update_event);
@@ -1022,6 +1036,101 @@ bus_sync_handler (GstBus *bus, GstMessage *message, gpointer user_data)
 }
 #endif
 
+gboolean
+gst_bin_add_link_many (GstElement * bin, GstElement * a, GstElement * b, ...)
+{
+	va_list args;
+	gboolean res = TRUE;
+
+	g_return_val_if_fail (GST_IS_BIN (bin), 0);
+	g_return_val_if_fail (GST_IS_ELEMENT (a), FALSE);
+
+	gst_bin_add (GST_BIN(bin), a);
+	//gst_element_sync_state_with_parent(a);
+	trvs(GST_ELEMENT_NAME(a));
+	va_start (args, b);
+
+	while (b) {
+		g_return_val_if_fail (GST_IS_ELEMENT (b), FALSE);
+		trvs(GST_ELEMENT_NAME(b));
+		trlvd(GST_OBJECT_REFCOUNT(b));
+		gst_bin_add (GST_BIN(bin), b);
+		//gst_element_sync_state_with_parent(b);
+
+		trlvd(GST_OBJECT_REFCOUNT(b));
+		if (!gst_element_link (a, b)) {
+			res = FALSE;
+			break;
+		}
+		trlvd(GST_OBJECT_REFCOUNT(b));
+		a = b;
+		b = va_arg (args, GstElement *);
+	}
+
+	va_end (args);
+
+	return res;
+}
+
+int make_video (ArvViewer *viewer)
+{
+	trl();
+#if __x86_64__ || videotestsrc
+	viewer->src = gst_element_factory_make ("videotestsrc", 0);
+	/*
+	   caps = gst_caps_new_empty ();
+	   GValue fps = G_VALUE_INIT;
+	   g_value_init (&fps, GST_TYPE_FRACTION);
+	   gst_value_set_fraction (&fps, 10, 1);
+	   gst_caps_set_value (caps, "framerate", &fps);
+	   gst_base_src_set_caps (GST_BASE_SRC (viewer->src), caps);*/
+	//g_value_unset (&fps);
+
+	//g_object_set(viewer->src, "pattern", 18, NULL); // GST_VIDEO_TEST_SRC_BALL
+	//g_object_set(viewer->src, "background-color", 0x80808080, NULL);
+	//g_object_set(viewer->src, "do-timestamp", TRUE, NULL);
+#else
+	viewer->src = gst_element_factory_make ("aravissrc", 0);
+#endif
+	GST_BASE_SRC_GET_CLASS(viewer->src)->event = GST_DEBUG_FUNCPTR (_event);
+	trvp(GST_BASE_SRC_CLASS(&((GstAravisClass*)GST_BASE_SRC_GET_CLASS(viewer->src))->parent_class));
+	trvp(&(((GstAravisClass*)GST_BASE_SRC_GET_CLASS(viewer->src))->parent_class.parent_class));
+	trvp(GST_BASE_SRC_GET_CLASS(GST_BASE_SRC_GET_CLASS(viewer->src)));
+	trvp(g_type_class_peek_parent(GST_BASE_SRC_GET_CLASS(viewer->src)));
+
+	assert(viewer->src);
+	viewer->pipeline = gst_pipeline_new ("pipeline");
+	GstElement *last;
+
+	gst_bin_add_link_many(viewer->pipeline,
+			      viewer->src,
+			      gst_element_factory_make ("videoconvert", NULL),
+#if __x86_64__
+			      //GstElement *videosink = gst_element_factory_make ("autovideosink", NULL); // works with videotestsrc
+			      //GstElement *videosink = gst_element_factory_make ("fpsdisplaysink", NULL);
+			      //GstElement *videosink = gst_element_factory_make ("gtksink", NULL);
+			      gst_element_factory_make ("xvimagesink", NULL),
+#else
+			      gst_element_factory_make ("xvimagesink", NULL),
+			      //GstBus_autoptr bus = gst_pipeline_get_bus (GST_PIPELINE (viewer->pipeline));
+			      //gst_bus_set_sync_handler (bus, (GstBusSyncHandler) bus_sync_handler, viewer, NULL);
+			      // Next: video_frame_realize_cb, bus_sync_handler
+#endif
+			      0);
+	return 1;
+}
+
+int start_video2(ArvViewer *ctx)
+{
+	trl();
+	gst_element_set_state (ctx->pipeline, GST_STATE_PLAYING);
+	if (ctx->camera)
+		arv_camera_start_acquisition (ctx->camera, NULL);
+	trl();
+	return 0;
+}
+
+#if ORIG
 static gboolean
 start_video (ArvViewer *viewer)
 {
@@ -1041,7 +1150,6 @@ start_video (ArvViewer *viewer)
 
 	viewer->rotation = 0;
 
-#if ORIG
 	viewer->stream = arv_camera_create_stream (viewer->camera, stream_cb, NULL, NULL);
 	if (!ARV_IS_STREAM (viewer->stream)) {
 
@@ -1071,7 +1179,6 @@ start_video (ArvViewer *viewer)
 	for (i = 0; i < 5; i++)
 		arv_stream_push_buffer (viewer->stream, arv_buffer_new (payload, NULL));
 	set_camera_widgets(viewer);
-#endif
 	pixel_format = arv_camera_get_pixel_format (viewer->camera, NULL);
 
 	caps_string = arv_pixel_format_to_gst_caps_string (pixel_format);
@@ -1084,50 +1191,6 @@ start_video (ArvViewer *viewer)
 	viewer->pipeline = gst_pipeline_new ("pipeline");
 
 	videoconvert = gst_element_factory_make ("videoconvert", NULL);
-	if (!viewer->stream) {
-		GstElement *last;
-
-		assert(!viewer->appsrc);
-		//gst_registry_add_path(gst_registry_get(), "gst/.libs");
-		viewer->src = gst_element_factory_make ("aravissrc", 0);
-		//viewer->src = gst_element_factory_make ("videotestsrc", 0);
-		GST_BASE_SRC_GET_CLASS(viewer->src)->event = GST_DEBUG_FUNCPTR (_event);
-		trvp(GST_BASE_SRC_CLASS(&((GstAravisClass*)GST_BASE_SRC_GET_CLASS(viewer->src))->parent_class));
-		trvp(&(((GstAravisClass*)GST_BASE_SRC_GET_CLASS(viewer->src))->parent_class.parent_class));
-		trvp(GST_BASE_SRC_GET_CLASS(GST_BASE_SRC_GET_CLASS(viewer->src)));
-		trvp(g_type_class_peek_parent(GST_BASE_SRC_GET_CLASS(viewer->src)));
-
-		assert(viewer->src);
-		last = add_link(viewer->pipeline, 0, viewer->src);
-		last = add_link(viewer->pipeline, last, videoconvert);
-#if 0
-		videosink = gst_element_factory_make ("gtksink", NULL);
-		GtkWidget *video_widget;
-		g_object_get(videosink, "widget", &video_widget, NULL);
-		gtk_container_add (GTK_CONTAINER(viewer->video_frame), video_widget);
-		gtk_widget_show(video_widget);
-#else
-		videosink = gst_element_factory_make ("xvimagesink", NULL);
-		//videosink = gst_element_factory_make ("autovideosink", NULL); // works with videotestsrc
-		//GstBus_autoptr bus = gst_pipeline_get_bus (GST_PIPELINE (viewer->pipeline));
-		//gst_bus_set_sync_handler (bus, (GstBusSyncHandler) bus_sync_handler, viewer, NULL);
-		// Next: video_frame_realize_cb, bus_sync_handler
-#endif
-		add_link(viewer->pipeline, last, videosink);
-
-		gst_element_set_state (viewer->pipeline, GST_STATE_PLAYING);
-		viewer->last_status_bar_update_time_ms = g_get_real_time () / 1000;
-		viewer->last_n_images = 0;
-		viewer->last_n_bytes = 0;
-		viewer->n_images = 0;
-		viewer->n_bytes = 0;
-		viewer->n_errors = 0;
-		viewer->status_bar_update_event = g_timeout_add_seconds (1, update_status_bar_cb, viewer);
-		gtk_window_set_keep_above(GTK_WINDOW (viewer->main_window), True);
-		return 1;
-	}
-#if ORIG
-	assert(!viewer->src);
 	viewer->appsrc = gst_element_factory_make ("appsrc", NULL);
 	viewer->transform = gst_element_factory_make ("videoflip", NULL);
 
@@ -1216,11 +1279,9 @@ start_video (ArvViewer *viewer)
 	g_signal_connect (viewer->stream, "new-buffer", G_CALLBACK (new_buffer_cb), viewer);
 	arv_camera_start_acquisition (viewer->camera, NULL);
 
-#endif
 	return TRUE;
 }
 
-#if ORIG
 static gboolean
 select_camera_list_mode (gpointer user_data)
 {
@@ -1265,7 +1326,6 @@ start_camera (ArvViewer *viewer, const char *camera_id)
 
 	if (!ARV_IS_CAMERA (viewer->camera))
 		return FALSE;
-#endif
 
 	arv_device_set_register_cache_policy (arv_camera_get_device (viewer->camera), viewer->cache_policy);
 
@@ -1416,8 +1476,11 @@ activate (GApplication *application)
 {
 	ArvViewer *viewer = (ArvViewer *) application;
 	g_autoptr (GtkBuilder) builder;
-
+#if ORIG
 	builder = gtk_builder_new_from_resource ("/org/aravis/viewer/arv-viewer.ui");
+#else
+	builder = gtk_builder_new_from_resource ("/org/argos/viewer/argos.ui");
+#endif
 
 	viewer->main_window = GTK_WIDGET (gtk_builder_get_object (builder, "main_window"));
 	viewer->main_stack = GTK_WIDGET (gtk_builder_get_object (builder, "main_stack"));
@@ -1442,6 +1505,7 @@ activate (GApplication *application)
 	viewer->fps_label = GTK_WIDGET (gtk_builder_get_object (builder, "fps_label"));
 	viewer->image_label = GTK_WIDGET (gtk_builder_get_object (builder, "image_label"));
 	viewer->trigger_combo_box = GTK_WIDGET (gtk_builder_get_object (builder, "trigger_combobox"));
+#endif
 	viewer->frame_rate_entry = GTK_WIDGET (gtk_builder_get_object (builder, "frame_rate_entry"));
 	viewer->exposure_spin_button = GTK_WIDGET (gtk_builder_get_object (builder, "exposure_spinbutton"));
 	viewer->gain_spin_button = GTK_WIDGET (gtk_builder_get_object (builder, "gain_spinbutton"));
@@ -1462,10 +1526,10 @@ activate (GApplication *application)
 
 	gtk_application_add_window (GTK_APPLICATION (application), GTK_WINDOW (viewer->main_window));
 	g_signal_connect (viewer->main_window, "destroy", G_CALLBACK (arv_viewer_quit_cb), viewer);
+#if ORIG
 	g_signal_connect (viewer->refresh_button, "clicked", G_CALLBACK (update_device_list_cb), viewer);
 	g_signal_connect (viewer->video_mode_button, "clicked", G_CALLBACK (switch_to_video_mode_cb), viewer);
 	g_signal_connect (viewer->back_button, "clicked", G_CALLBACK (switch_to_camera_list_cb), viewer);
-#if 0
 	g_signal_connect (viewer->snapshot_button, "clicked", G_CALLBACK (snapshot_cb), viewer);
 	g_signal_connect (viewer->rotate_cw_button, "clicked", G_CALLBACK (rotate_cw_cb), viewer);
 	g_signal_connect (viewer->flip_horizontal_toggle, "clicked", G_CALLBACK (flip_horizontal_cb), viewer);
@@ -1480,6 +1544,7 @@ activate (GApplication *application)
 	}
 	viewer->camera_selected = g_signal_connect (gtk_tree_view_get_selection (GTK_TREE_VIEW (viewer->camera_tree)), "changed",
 						    G_CALLBACK (camera_selection_changed_cb), viewer);
+#endif
 	viewer->exposure_spin_changed = g_signal_connect (viewer->exposure_spin_button, "value-changed",
 							  G_CALLBACK (exposure_spin_cb), viewer);
 	viewer->gain_spin_changed = g_signal_connect (viewer->gain_spin_button, "value-changed",
@@ -1492,6 +1557,7 @@ activate (GApplication *application)
 							  G_CALLBACK (auto_exposure_cb), viewer);
 	viewer->auto_gain_clicked = g_signal_connect (viewer->auto_gain_toggle, "clicked",
 						      G_CALLBACK (auto_gain_cb), viewer);
+#if ORIG
 	viewer->pixel_format_changed = g_signal_connect (viewer->pixel_format_combo, "changed",
 							 G_CALLBACK (pixel_format_combo_cb), viewer);
 	viewer->camera_x_changed = g_signal_connect (viewer->camera_x, "value-changed",
@@ -1510,11 +1576,14 @@ activate (GApplication *application)
 	gtk_widget_set_sensitive (viewer->camera_parameters, FALSE);
 	select_mode (viewer, ARV_VIEWER_MODE_CAMERA_LIST);
 	update_device_list_cb (GTK_TOOL_BUTTON (viewer->refresh_button), viewer);
+#endif
 
 #if !ORIG
 	//start_camera(viewer, NULL);
 	//select_mode(viewer, ARV_VIEWER_MODE_VIDEO); //calls start_video
-	start_video (viewer);
+	make_video(viewer);
+	start_video2(viewer);
+	viewer->status_bar_update_event = g_timeout_add_seconds (1, update_status_cb, viewer);
 #endif
 }
 
@@ -1559,11 +1628,13 @@ ArvViewer *
 arv_viewer_new (void)
 {
 
+#if ORIG
   if (!gstreamer_plugin_check ())
 	  return NULL;
-
   g_set_application_name ("ArvViewer");
-
+#else
+  g_set_application_name ("Argos");
+#endif
   arv_viewer = g_object_new (arv_viewer_get_type (),
 			     "application-id", "org.aravis.ArvViewer",
 			     "flags", G_APPLICATION_NON_UNIQUE,

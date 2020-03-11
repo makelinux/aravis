@@ -42,4 +42,28 @@ install_subdir (join_paths ('icons', 'gnome'),
 		install_dir: aravis_icon_dir,
 		strip_directory: true)
 
+executable ('argos',
+	    viewer_sources, viewer_headers, viewer_resources,
+	    link_with: aravis_library,
+	    c_args: viewer_c_args,
+	    link_args: link_args,
+	    include_directories: [library_inc],
+	    dependencies: viewer_deps,
+	    install: true)
+
+executable ('webrtc+sig',
+	    [ 'webrtc+sig.c'],
+	    viewer_headers, viewer_resources,
+	    link_with: aravis_library,
+	    c_args: viewer_c_args,
+	    link_args: link_args,
+	    include_directories: [library_inc],
+	    dependencies: viewer_deps +
+	    [
+		dependency('libsoup-2.4'),
+		dependency('json-glib-1.0'),
+		dependency('gstreamer-sdp-1.0'),
+		dependency('gstreamer-webrtc-1.0'),
+	    ],
+	    install: true)
 subdir ('data')
