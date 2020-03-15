@@ -147,16 +147,8 @@ void arv_uv_stream_leader_cb (struct libusb_transfer *transfer)
 			//trvd(ctx->buffer->priv->timestamp_ns);
 			static guint64 prev;
 			ctx->buffer->priv->timestamp_ns = arv_uvsp_packet_get_timestamp (packet);
-			float interval = 1e-9*(ctx->buffer->priv->timestamp_ns - prev);
-			float rate =  1 / interval;
+			g_atomic_int_set(&ctx->statistics->interval_ms, (guint)(1e-6 * (ctx->buffer->priv->timestamp_ns - prev)));
 			prev = ctx->buffer->priv->timestamp_ns;
-			static float p;
-			if (!p || fabs((interval-p)/p) > 0.01) {
-				//trl_();
-				trvf_(interval);
-				trvf(rate);
-				p = interval;
-			}
 			break;
 		default:
 			arv_warning_stream_thread ("Leader transfer failed: transfer->status = %d", transfer->status);
