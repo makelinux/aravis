@@ -183,6 +183,7 @@ typedef struct {
 
 	NotifyNotification *notification;
 
+	GtkBuilder *builder;
 	GtkWidget *main_window;
 	GtkWidget *main_stack;
 #if ORIG
@@ -776,12 +777,19 @@ update_status_cb (void *data)
 	set_camera_widgets(viewer);
 	guint n_errors = viewer->n_errors;
 
-	ArvStreamStatistics * st = arv_stream_get_statistics2 (viewer->stream);
-	if (!st)
-		return FALSE;
+	GString *s = g_string_new (0);
+	if (!stream) {
+		g_string_append_printf(s, "no camera\n");
+		goto exit;
+	}
+	ArvStreamStatistics * st = arv_stream_get_statistics2 (stream);
+	if (!st) {
+		g_string_append_printf(s, "no data\n");
+		goto exit;
+	}
 	g_string_append_printf(s, "internal latency: %d ms\n", st->latency_ms);
-	if (!empties)
-		trvd_(empties);
+	if (n_errors)
+		g_string_append_printf (s, "errors: %u\n", n_errors);
 
 	gint empties = -1, loads;
 	arv_stream_get_n_buffers (stream, &empties, &loads);
@@ -789,9 +797,11 @@ update_status_cb (void *data)
 		g_string_append_printf (s, "empties: %u\n", empties);
 	if (st->n_failures)
 		g_string_append_printf (s, "failures: %u\n", st->n_failures);
-		trvd_(loads);
-	trvd_(n_underruns);
-	trln();
+	if (loads > 2)
+		g_string_append_printf (s, "loads: %u\n", loads);
+exit:
+	gtk_label_set_label(GTK_LABEL(gtk_builder_get_object(viewer->builder, "stats")), s->str);
+	g_string_free (s, TRUE);
 	return TRUE;
 }
 
@@ -1585,6 +1595,8 @@ activate (GApplication *application)
 	start_video2(viewer);
 	viewer->status_bar_update_event = g_timeout_add_seconds (1, update_status_cb, viewer);
 #endif
+	viewer->builder = builder;
+	builder = NULL;
 }
 
 static void

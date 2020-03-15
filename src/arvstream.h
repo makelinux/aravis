@@ -52,7 +52,7 @@ typedef struct {
 	guint n_completed_buffers;
 	guint n_failures;
 	guint n_underruns;
-	double latency;
+	guint latency_ms;
 } ArvStreamStatistics;
 
 #define ARV_TYPE_STREAM             (arv_stream_get_type ())

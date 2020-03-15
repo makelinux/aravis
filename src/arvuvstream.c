@@ -401,7 +401,7 @@ arv_uv_stream_thread_async (void *data)
 			       !g_atomic_int_get (&thread_data->cancel))
 				usleep(10000);
 
-			//trlvd(thread_data->statistics.n_underruns);
+			//trlvd(thread_data->stats.n_underruns);
 #if 0 // arv_stream_push_buffer needs to notify us...
 			g_mutex_lock (&thread_data->stream_mtx);
 			g_cond_wait (&thread_data->stream_event, &thread_data->stream_mtx);
@@ -843,12 +843,6 @@ arv_uv_stream_finalize (GObject *object)
 		arv_debug_stream ("[UvStream::finalize] n_underruns            = %u",
 				  thread_data->stats.n_underruns);
 
-		trlvd(thread_data->statistics.n_completed_buffers);
-		trlvd(thread_data->statistics.n_failures);
-		trlvd(thread_data->statistics.n_underruns);
-		float fails_ratio = thread_data->statistics.n_failures / (thread_data->statistics.n_completed_buffers + thread_data->statistics.n_failures);
-		trlvd(fails_ratio);
-
 		g_atomic_int_set (&thread_data->cancel, TRUE);
 		g_cond_broadcast (&thread_data->stream_event);
 		g_thread_join (priv->thread);
@@ -856,6 +850,7 @@ arv_uv_stream_finalize (GObject *object)
 		trlvd(thread_data->stats.n_completed_buffers);
 		trlvd(thread_data->stats.n_failures);
 		trlvd(thread_data->stats.n_underruns);
+
 		float fails_ratio = thread_data->stats.n_failures / (thread_data->stats.n_completed_buffers + thread_data->stats.n_failures);
 		trlvd(fails_ratio);
 
