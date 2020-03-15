@@ -182,6 +182,7 @@ typedef struct {
 
 	NotifyNotification *notification;
 
+	GtkBuilder *builder;
 	GtkWidget *main_window;
 	GtkWidget *main_stack;
 #if ORIG
@@ -768,18 +769,30 @@ update_status_cb (void *data)
 	guint64 n_failures;
 	guint64 n_underruns;
 	arv_stream_get_statistics (stream, &n_completed_buffers, &n_failures, &n_underruns);
+	GString *s = g_string_new (0);
+	g_string_append_printf(s, "frame rate: %.1f fps\n",
+				1000.0 * (n_images - viewer->last_n_images) / elapsed_time_ms);
+	if (!stream) {
+		g_string_append_printf(s, "no camera\n");
+		goto exit;
+	}
 	ArvStreamStatistics * st = arv_stream_get_statistics2 (stream);
-	if (!st)
-		return FALSE;
+	if (!st) {
+		g_string_append_printf(s, "no data\n");
+		goto exit;
+	}
 	g_string_append_printf(s, "internal latency: %d ms\n", st->latency_ms);
+	if (n_errors)
+		g_string_append_printf (s, "errors: %u\n", n_errors);
 	if (!empties)
-		trvd_(empties);
-	if (loads > 2)
-		trvd_(loads);
+		g_string_append_printf (s, "empties: %u\n", empties);
 	if (n_failures)
-		trvd_(n_failures);
-	trvd_(n_underruns);
-	trln();
+		g_string_append_printf (s, "failures: %ld\n", n_failures);
+	if (loads > 2)
+		g_string_append_printf (s, "loads: %u\n", loads);
+exit:
+	gtk_label_set_label(GTK_LABEL(gtk_builder_get_object(viewer->builder, "stats")), s->str);
+	g_string_free (s, TRUE);
 	return TRUE;
 }
 
@@ -1531,6 +1544,8 @@ activate (GApplication *application)
 	//select_mode(viewer, ARV_VIEWER_MODE_VIDEO); //calls start_video
 	start_video (viewer);
 #endif
+	viewer->builder = builder;
+	builder = NULL;
 }
 
 static void

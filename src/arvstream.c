@@ -87,7 +87,7 @@ arv_stream_push_buffer (ArvStream *stream, ArvBuffer *buffer)
 		if (!p || fabs((latency-p)/p) > 0.1) {
 			p = latency;
 			ArvStreamStatistics * st = arv_stream_get_statistics2(stream);
-			st->latency = latency;
+			g_atomic_int_set(&st->latency_ms, (guint)(1e3 * latency));
 		}
 	}
 	g_async_queue_push (priv->input_queue, buffer);
