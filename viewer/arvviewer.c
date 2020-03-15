@@ -787,7 +787,15 @@ update_status_cb (void *data)
 		g_string_append_printf(s, "no data\n");
 		goto exit;
 	}
-	g_string_append_printf(s, "internal latency: %d ms\n", st->latency_ms);
+	if (st->interval_ms > 0) {
+		g_string_append_printf(s, "frame rate: %.1f fps\n", 1e3 / st->interval_ms);
+		g_string_append_printf(s, "interval: %d ms\n", st->interval_ms);
+		g_atomic_int_set(&st->interval_ms, -1);
+		g_string_append_printf(s, "internal latency: %d ms\n", st->latency_ms);
+		g_string_append_printf(s, "X: %.0f \n", x);
+		g_string_append_printf(s, "Y: %.0f \n", y);
+		g_string_append_printf(s, "pixel: %u \n", 1000*st->pixel/255);
+	}
 	if (n_errors)
 		g_string_append_printf (s, "errors: %u\n", n_errors);
 
