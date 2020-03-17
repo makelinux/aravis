@@ -857,6 +857,8 @@ update_camera_region (ArvViewer *viewer)
 	gint dx, dy;
 	gint min, max;
 	gint inc;
+	if (!viewer->camera)
+		return;
 
 	g_signal_handler_block (viewer->camera_x, viewer->camera_x_changed);
 	g_signal_handler_block (viewer->camera_y, viewer->camera_y_changed);
@@ -1426,6 +1428,9 @@ select_mode (ArvViewer *viewer, ArvViewerMode mode)
 			stop_video (viewer);
 			break;
 		case ARV_VIEWER_MODE_VIDEO:
+			start_video (viewer);
+			if (!viewer->camera)
+				break;
 			video_visibility = TRUE;
 			arv_camera_get_region (viewer->camera, &x, &y, &width, &height, NULL);
 			subtitle = g_strdup_printf ("%s %dx%d@%d,%d %s",
@@ -1437,7 +1442,6 @@ select_mode (ArvViewer *viewer, ArvViewerMode mode)
 			gtk_header_bar_set_title (GTK_HEADER_BAR (viewer->main_headerbar), viewer->camera_name);
 			gtk_header_bar_set_subtitle (GTK_HEADER_BAR (viewer->main_headerbar), subtitle);
 			g_free (subtitle);
-			start_video (viewer);
 			break;
 		default:
 			g_assert_not_reached ();

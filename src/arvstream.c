@@ -176,8 +176,8 @@ ArvBuffer *
 arv_stream_timeout_pop_buffer (ArvStream *stream, guint64 timeout)
 {
 	ArvStreamPrivate *priv = arv_stream_get_instance_private (stream);
-
-	g_return_val_if_fail (ARV_IS_STREAM (stream), NULL);
+	if (!ARV_IS_STREAM (stream))
+	    return NULL;
 
 	ArvBuffer * b = g_async_queue_timeout_pop (priv->output_queue, timeout);
 	if (b && arv_buffer_get_status (b) == ARV_BUFFER_STATUS_SUCCESS ) {
@@ -378,7 +378,8 @@ arv_stream_get_statistics (ArvStream *stream,
 	*n_failures = 0;
 	*n_underruns = 0;
 
-	g_return_if_fail (ARV_IS_STREAM (stream));
+	if (!ARV_IS_STREAM (stream))
+		return;
 
 	stream_class = ARV_STREAM_GET_CLASS (stream);
 	if (stream_class->get_statistics != NULL)

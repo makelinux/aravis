@@ -160,7 +160,7 @@ gst_aravis_set_caps (GstBaseSrc *src, GstCaps *caps)
 	unsigned int i;
 
 	GST_LOG_OBJECT (gst_aravis, "Requested caps = %" GST_PTR_FORMAT, caps);
-
+	g_return_val_if_fail (gst_aravis->camera, FALSE);
 	arv_camera_stop_acquisition (gst_aravis->camera, NULL);
 
 	if (gst_aravis->stream != NULL)
