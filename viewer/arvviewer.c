@@ -774,6 +774,8 @@ update_status_cb (void *data)
 	ArvViewer *viewer = data;
 	ArvStream *stream = 0;
 	gtk_window_set_keep_above(GTK_WINDOW (viewer->main_window), True);
+	char g_autofree *p = 0;
+	char g_autofree *t = 0;
 	if (viewer->src)
 		stream = ((GstAravis*)viewer->src)->stream;
 	set_camera_widgets(viewer);
@@ -800,6 +802,11 @@ update_status_cb (void *data)
 		g_atomic_int_set(&st->y, (int)y);
 		g_atomic_int_set(&st->x, (int)x);
 	}
+	g_string_append_printf(s, "Camera temp: %.1f C\n", arv_camera_get_float (viewer->camera, "DeviceTemperature", 0));
+	g_file_get_contents ("/sys/devices/system/cpu/cpufreq/policy0/scaling_cur_freq", &p, 0, NULL);
+	g_string_append_printf(s, "CPU freq: %.2g GHz \n", atof(p) / 1e6);
+	g_file_get_contents ("/sys/class/hwmon/hwmon0/temp1_input", &t, 0, NULL);
+	g_string_append_printf(s, "CPU temp: %.1f C \n", atof(t) / 1e3);
 	if (n_errors)
 		g_string_append_printf (s, "errors: %u\n", n_errors);
 
