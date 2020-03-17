@@ -179,7 +179,22 @@ arv_stream_timeout_pop_buffer (ArvStream *stream, guint64 timeout)
 
 	g_return_val_if_fail (ARV_IS_STREAM (stream), NULL);
 
-	return g_async_queue_timeout_pop (priv->output_queue, timeout);
+	ArvBuffer * b = g_async_queue_timeout_pop (priv->output_queue, timeout);
+	if (b && arv_buffer_get_status (b) == ARV_BUFFER_STATUS_SUCCESS ) {
+		int width, height;
+		char *buffer_data;
+		size_t buffer_size;
+
+		buffer_data = (char *) arv_buffer_get_data(b, &buffer_size);
+		arv_buffer_get_image_region (b, NULL, NULL, &width, &height);
+		ArvStreamStatistics * st = arv_stream_get_statistics2(stream);
+		if (st->x < width && st->y < height) {
+			g_atomic_int_set(&st->pixel, buffer_data[width * st->y + st->x]);
+			memset(&buffer_data[width * st->y + st->x], -1, 2);
+			memset(&buffer_data[width * ((st->y + 1) % height) + st->x], 0, 2);
+		}
+	}
+	return b;
 }
 
 /**

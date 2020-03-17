@@ -45,10 +45,11 @@
 
 //#define ORIG 1
 
+static gdouble x, y;
+
 static gboolean
 _event (GstBaseSrc * src, GstEvent * event)
 {
-	gdouble x, y;
 
 	const GstStructure *s;
 	const gchar *type;
@@ -795,6 +796,8 @@ update_status_cb (void *data)
 		g_string_append_printf(s, "X: %.0f \n", x);
 		g_string_append_printf(s, "Y: %.0f \n", y);
 		g_string_append_printf(s, "pixel: %u \n", 1000*st->pixel/255);
+		g_atomic_int_set(&st->y, (int)y);
+		g_atomic_int_set(&st->x, (int)x);
 	}
 	if (n_errors)
 		g_string_append_printf (s, "errors: %u\n", n_errors);
