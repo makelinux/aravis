@@ -38,6 +38,8 @@ G_DECLARE_FINAL_TYPE (ArvUvDevice, arv_uv_device, ARV, UV_DEVICE, ArvDevice)
 ArvDevice * 	arv_uv_device_new 			(const char *vendor, const char *product, const char *serial_number,
 							 GError **error);
 
+void arv_device_reset(ArvDevice *device);
+
 G_END_DECLS
 
 #endif

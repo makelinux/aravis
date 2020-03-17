@@ -844,6 +844,9 @@ arv_uv_device_constructed (GObject *object)
 		arv_device_take_init_error (ARV_DEVICE (uv_device), g_error_new (ARV_DEVICE_ERROR, ARV_DEVICE_ERROR_PROTOCOL_ERROR,
 										 "Failed to bootstrap USB device '%s:%s:%s'",
 										 priv->vendor, priv->product, priv->serial_number));
+		fprintf(stderr, "Resetting\n");
+		libusb_reset_device(priv->usb_device);
+		fprintf(stderr, "Please restart\n");
 		return;
 	}
 
@@ -967,4 +970,13 @@ arv_uv_device_class_init (ArvUvDeviceClass *uv_device_class)
 				      "USB3 device serial number",
 				      NULL,
 				      G_PARAM_WRITABLE | G_PARAM_CONSTRUCT_ONLY));
+}
+
+void
+arv_device_reset (ArvDevice *device)
+{
+	ArvUvDevice *uv_device = ARV_UV_DEVICE (device);
+	ArvUvDevicePrivate *priv = arv_uv_device_get_instance_private(uv_device);
+	if (priv)
+		libusb_reset_device(priv->usb_device);
 }
