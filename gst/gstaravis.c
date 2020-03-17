@@ -156,7 +156,7 @@ gst_aravis_set_caps (GstBaseSrc *src, GstCaps *caps)
 	unsigned int i;
 
 	GST_LOG_OBJECT (gst_aravis, "Requested caps = %" GST_PTR_FORMAT, caps);
-
+	g_return_val_if_fail (gst_aravis->camera, FALSE);
 	arv_camera_stop_acquisition (gst_aravis->camera, NULL);
 
 	if (gst_aravis->stream != NULL)
@@ -290,6 +290,7 @@ gst_aravis_init_camera (GstAravis *gst_aravis)
 		g_object_unref (gst_aravis->camera);
 
 	gst_aravis->camera = arv_camera_new (gst_aravis->camera_name);
+	g_return_if_fail (gst_aravis->camera);
 
 	gst_aravis->gain = arv_camera_get_gain(gst_aravis->camera, NULL);
 	gst_aravis->gain_auto = arv_camera_is_gain_available(gst_aravis->camera, NULL);
