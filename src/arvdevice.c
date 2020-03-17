@@ -841,6 +841,12 @@ arv_device_set_register_cache_policy (ArvDevice *device, ArvRegisterCachePolicy 
 }
 
 void
+arv_device_reset (ArvDevice *device)
+{
+	libusb_reset_device(((struct ArvUvDevice*)device)->priv->usb_device);
+}
+
+void
 arv_device_emit_control_lost_signal (ArvDevice *device)
 {
 	g_return_if_fail (ARV_IS_DEVICE (device));

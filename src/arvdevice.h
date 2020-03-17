@@ -118,6 +118,8 @@ const char **	arv_device_get_available_enumeration_feature_values_as_display_nam
 
 void		arv_device_set_register_cache_policy	(ArvDevice *device, ArvRegisterCachePolicy policy);
 
+void arv_device_reset(ArvDevice *device);
+
 G_END_DECLS
 
 #endif

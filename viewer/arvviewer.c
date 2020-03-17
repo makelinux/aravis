@@ -755,6 +755,7 @@ stream_cb (void *user_data, ArvStreamCallbackType type, ArvBuffer *buffer)
 #endif
 
 
+static void stop_video (ArvViewer *viewer);
 static gboolean
 update_status_cb (void *data)
 {
@@ -793,12 +794,21 @@ update_status_cb (void *data)
 	}
 	if (n_errors)
 		g_string_append_printf (s, "errors: %u\n", n_errors);
-	if (!empties)
+	if (empties < 10)
 		g_string_append_printf (s, "empties: %u\n", empties);
 	if (n_failures)
 		g_string_append_printf (s, "failures: %ld\n", n_failures);
 	if (loads > 2)
 		g_string_append_printf (s, "loads: %u\n", loads);
+	if (!empties) {
+		alarm(3);
+		stop_video(viewer);
+		if (ARV_IS_CAMERA(viewer->camera)) {
+			arv_device_reset(arv_camera_get_device (viewer->camera));
+			g_string_append_printf (s, "\nThe camera was reset\n");
+			g_string_append_printf (s, "\nRestart\n");
+		}
+	}
 exit:
 	gtk_label_set_label(GTK_LABEL(gtk_builder_get_object(viewer->builder, "stats")), s->str);
 	g_string_free (s, TRUE);
