@@ -19,6 +19,9 @@
  *
  * Author: Emmanuel Pacaud <emmanuel@gnome.org>
  */
+#include <sys/time.h>
+#include <sys/resource.h>
+#include <sys/sysinfo.h>
 
 #include <assert.h>
 #include <gtk/gtk.h>
@@ -754,6 +757,44 @@ stream_cb (void *user_data, ArvStreamCallbackType type, ArvBuffer *buffer)
 }
 #endif
 
+float timer_diff(struct timeval *t2, struct timeval *t1)
+{
+	struct timeval d;
+	timersub(t2, t1, &d);
+	return d.tv_sec + d.tv_usec / 1e6;
+}
+
+int get_usage(int *user, int *kernel, int *idle)
+{
+	/*
+	   static struct timespec t1;
+	   struct timespec t2;
+	// CLOCK_MONOTONIC_COARSE
+	clock_gettime(CLOCK_PROCESS_CPUTIME_ID, &t2);
+	clock_gettime(CLOCK_MONOTONIC_RAW, &t2);
+	trlvd(t2.tv_sec);
+	trlvd(t2.tv_nsec);
+	 */
+	static struct timeval tv1;
+	struct rusage u2;
+	getrusage(RUSAGE_SELF, &u2);
+	struct timeval tv2;
+	gettimeofday(&tv2, NULL);
+	static struct rusage u1;
+	float d = get_nprocs() * timer_diff(&tv2, &tv1);
+	*user = 100*timer_diff(&u2.ru_utime, &u1.ru_utime) / d;
+	*kernel = 100*timer_diff(&u2.ru_stime, &u1.ru_stime) / d;
+	char g_autofree *s;
+	g_file_get_contents("/proc/uptime", &s, 0, NULL);
+	static double idle1;
+	double idle2;
+	sscanf(s,"%*f %lf", &idle2);
+	*idle = 100*(idle2 - idle1) / d;
+	u1 = u2;
+	tv1 = tv2;
+	idle1 = idle2;
+	return 0;
+}
 
 static void stop_video (ArvViewer *viewer);
 static gboolean
@@ -797,6 +838,10 @@ update_status_cb (void *data)
 	g_string_append_printf(s, "Camera temp: %.1f C\n", arv_camera_get_float (viewer->camera, "DeviceTemperature", 0));
 	g_file_get_contents ("/sys/devices/system/cpu/cpufreq/policy0/scaling_cur_freq", &p, 0, NULL);
 	g_string_append_printf(s, "CPU freq: %.2g GHz \n", atof(p) / 1e6);
+	int user, kernel, idle;
+	get_usage(&user, &kernel, &idle);
+	g_string_append_printf(s, "CPU usage total (kernel): %d (%d) %%\n", user + kernel, kernel);
+	g_string_append_printf(s, "Idle CPU: %d%%\n", idle);
 	g_file_get_contents ("/sys/class/hwmon/hwmon0/temp1_input", &t, 0, NULL);
 	g_string_append_printf(s, "CPU temp: %.1f C \n", atof(t) / 1e3);
 	if (n_errors)
