@@ -1,4 +1,4 @@
-m=$(shell uname --machine)
+m=build.$(shell uname --machine)
 
 all:
 	test -e $m/build.ninja || meson $m

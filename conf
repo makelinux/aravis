@@ -1,0 +1,68 @@
+#!/bin/sh
+
+m=build.$(uname --machine)
+export GST_PLUGIN_PATH=$m/gst; PATH+=:$m/tests:$m/viewer
+alias arv-tool=$m/src/arv-tool-0.8
+gstaravis=$m/gst/libgstaravis.0.8.so
+alias arv-viewer=arv-viewer-0.8
+aravissrc='gst-launch-1.0 --gst-plugin-load=$gstaravis aravissrc'
+alias aravissrc="$aravissrc"
+export DISPLAY=:0
+
+jetson-status()
+{
+	grep '' /usr/local/jetson_stats/fan_config
+	systemctl status jetson_stats_boot | cat
+	grep '' \
+		/sys/class/hwmon/hwmon1/rpm /sys/class/hwmon/hwmon0/temp1_input /sys/devices/pwm-fan/target_pwm \
+		/sys/devices/pwm-fan/cur_pwm /sys/devices/system/cpu/online /sys/devices/system/cpu/*/online \
+		/sys/devices/system/cpu/cpufreq/policy0/scaling_cur_freq
+}
+
+alias videotestsrc='gst-launch-1.0 videotestsrc '
+alias videotestsrc-short='gst-launch-1.0 videotestsrc num-buffers=200 '
+alias udpsrc='gst-launch-1.0 udpsrc '
+
+reset-usb-hub()
+{
+	echo 'usb2' | sudo tee /sys/bus/usb/drivers/usb/unbind
+	echo 'usb2' | sudo tee /sys/bus/usb/drivers/usb/bind
+}
+
+reset-cam()
+{
+	. $(grep -sl 2676/ba02 /sys/devices/3610000.xhci/*/*/uevent \
+		/sys/devices/*usb/*/*/*/uevent)
+	usbreset /dev/$DEVNAME
+}
+
+timer()
+{
+ 	echo; while sleep 0.01; do echo -ne "  $(date +$"%S.%N")\b\b\b\b\b\b sec       \r"; done
+}
+
+debug()
+{
+	G_DEBUG=fatal-warnings gdb ./$m/viewer/arv-viewer-0.8
+}
+
+stack()
+{
+	echo bt | coredumpctl gdb | sed 's|../||' | grep --color ' [^ ]\+:[0-9]\+'
+}
+
+nvcodecs()
+{
+	cd gst-plugins-bad
+	test -f configure || ./autogen.sh --disable-gtk-doc --noconfigure
+	NVENCODE_CFLAGS='-I/usr/local/cuda/include -I/home/costa/Video_Codec_SDK_9.1.23/include' NVENCODE_LIBS='-L/usr/lib/aarch64-linux-gnu/' ./configure -q --with-cuda-prefix="/usr/local/cuda" &> conf.log
+	make -C sys/nvenc
+	make -C sys/nvdec
+}
+
+installs()
+{
+	sudo add-apt-repository ppa:obsproject/obs-studio
+	sudo apt-get update
+	sudo apt-get install -y obs-studio
+}
