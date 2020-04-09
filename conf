@@ -1,0 +1,33 @@
+#!/bin/sh
+
+m=$(uname --machine)
+export GST_PLUGIN_PATH=$m/gst; PATH+=:$m/tests:$m/viewer; alias arv-tool=$m/src/arv-tool-0.8; gstaravis=$m/gst/libgstaravis.0.8.so; alias arv-viewer=arv-viewer-0.8; alias aravissrc='gst-launch-1.0 -v --gst-plugin-load=$gstaravis aravissrc'
+export DISPLAY=:0
+
+
+alias videotestsrc='gst-launch-1.0 videotestsrc'
+
+reset-usb-hub()
+{
+	echo 'usb2' | sudo tee /sys/bus/usb/drivers/usb/unbind
+	echo 'usb2' | sudo tee /sys/bus/usb/drivers/usb/bind
+}
+
+reset-cam()
+{
+	. $(grep -sl 2676/ba02 /sys/devices/3610000.xhci/*/*/uevent \
+		/sys/devices/*usb/*/*/*/uevent)
+	usbreset /dev/$DEVNAME
+}
+
+timer()
+{
+ 	echo; while sleep 0.01; do echo -ne "  $(date +$"%S.%N")\b\b\b\b\b\b sec       \r"; done
+}
+
+debug()
+{
+	G_DEBUG=fatal-warnings gdb ./$m/viewer/arv-viewer-0.8
+	# coredumpctl gdb
+}
+
