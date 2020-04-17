@@ -1,4 +1,13 @@
-build/
-.*.swp
+*.patch
+*.png
 *~
+.*.swp
+?
+??
+Doxyfile*
+Doxyfile.explained
+aarch64
+build/
+cscope.out
+doxygen.dot
 x86_64
