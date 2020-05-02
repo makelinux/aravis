@@ -5,14 +5,12 @@
 .error { color: red; }
 		</style>
 		<script src="https://webrtc.github.io/adapter/adapter-latest.js"></script>
-		<script>
-		</script>
 	</head>
 	<body>
 		<div><video id="video" autoplay playsinline>Your browser doesn't support video</video></div>
 		<div>State: <span id="state">unknown</span></div>
 		<div><textarea id="text" cols=40 rows=4></textarea></div>
-		<div>Peer id is <b id="peer-id">unknown</b></div>
+		<div>Id is <b id="id">unknown</b></div>
 		<br/>
 		<div>
 			<div>getUserMedia constraints being used:</div>
@@ -26,12 +24,12 @@ var id =  "argos"
 // Override with your own STUN servers if you want
 var connect_attempts = 0;
 var peer;
-var send_channel;
+var out;
 var ws_conn;
 
 function handleIncomingError(error) {
 	setError("ERROR: " + error);
-	resetState();
+	//resetState();
 }
 
 function setStatus(s) {
@@ -39,7 +37,6 @@ function setStatus(s) {
 	// Don't set the state if it already contains an error
 	//if (!state.classList.contains('error'))
 	state.textContent = s;
-	text.value = text.value + '\n' + s
 }
 
 function setError(text) {
@@ -136,8 +133,8 @@ window.onload = websocketServerConnect;
 function websocketServerConnect() {
 	connect_attempts++;
 	if (connect_attempts > 3) {
-		setError("Too many connection attempts, aborting. Refresh page to try again");
-		return;
+		//setError("Too many connection attempts, aborting. Refresh page to try again");
+		//return;
 	}
 	state.classList.remove('error');
 	state.textContent = '';
@@ -157,7 +154,7 @@ function websocketServerConnect() {
 	ws_conn = new WebSocket(ws_url);
 	/* When connected, immediately register with the server */
 	ws_conn.addEventListener('open', (event) => {
-		document.getElementById("peer-id").textContent = id;
+		document.getElementById("id").textContent = id;
 		ws_conn.send('HELLO ' + id);
 		setStatus("Registering with server");
 	});
@@ -187,7 +184,7 @@ const handleDataChannelMessageReceived = (event) =>{
 	} else {
 		console.log('Incoming data message');
 	}
-	send_channel.send("Hi! (from browser)");
+	out.send("Hi! (from browser)");
 };
 
 const handleDataChannelError = (error) =>{
@@ -215,11 +212,11 @@ function createCall(msg) {
 
 	peer = new RTCPeerConnection({iceServers: [{urls: "stun:stun.services.mozilla.com"},
 	{urls: "stun:stun.l.google.com:19302"}]});
-	send_channel = peer.createDataChannel('label', null);
-	send_channel.onopen = handleDataChannelOpen;
-	send_channel.onmessage = handleDataChannelMessageReceived;
-	send_channel.onerror = handleDataChannelError;
-	send_channel.onclose = handleDataChannelClose;
+	out = peer.createDataChannel('label', null);
+	out.onopen = handleDataChannelOpen;
+	out.onmessage = handleDataChannelMessageReceived;
+	out.onerror = handleDataChannelError;
+	out.onclose = handleDataChannelClose;
 	peer.ondatachannel = onDataChannel;
 	peer.ontrack = onRemoteTrack;
 
