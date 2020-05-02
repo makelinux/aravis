@@ -817,8 +817,11 @@ update_status_cb (void *data)
 	gtk_window_set_keep_above(GTK_WINDOW (viewer->main_window), True);
 	char g_autofree *p = 0;
 	char g_autofree *t = 0;
+#if __x86_64__ || videotestsrc
+#else
 	if (viewer->src)
 		stream = ((GstAravis*)viewer->src)->stream;
+#endif
 	set_camera_widgets(viewer);
 	guint n_errors = viewer->n_errors;
 
@@ -1277,6 +1280,13 @@ start_video (ArvViewer *viewer)
 	viewer->pipeline = gst_pipeline_new ("pipeline");
 
 	videoconvert = gst_element_factory_make ("videoconvert", NULL);
+#if __x86_64__ || test_mode > 3
+		viewer->src = gst_element_factory_make ("videotestsrc", 0);
+		g_object_set(viewer->src, "pattern", 18, NULL); // GST_VIDEO_TEST_SRC_BALL
+		g_object_set(viewer->src, "background-color", 0x80808080, NULL);
+		g_object_set(viewer->src, "do-timestamp", TRUE, NULL);
+#else
+#endif
 	viewer->appsrc = gst_element_factory_make ("appsrc", NULL);
 	viewer->transform = gst_element_factory_make ("videoflip", NULL);
 
