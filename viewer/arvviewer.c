@@ -57,7 +57,7 @@ static gdouble x, y;
 
 static gboolean
 _event (GstBaseSrc * src, GstEvent * event)
-{
+{	trllog();
 
 	const GstStructure *s;
 	const gchar *type;
@@ -99,7 +99,7 @@ static gboolean has_gtkglsink = FALSE;
 
 static gboolean
 gstreamer_plugin_check (void)
-{
+{	_entry:;
 	static gsize check_done = 0;
 	static gboolean check_success = FALSE;
 
@@ -284,7 +284,7 @@ arv_viewer_set_options (ArvViewer *viewer,
 			guint packet_timeout,
 			guint frame_retention,
 			ArvRegisterCachePolicy cache_policy)
-{
+{	_entry:;
 	g_return_if_fail (viewer != NULL);
 
 	viewer->auto_socket_buffer = auto_socket_buffer;
@@ -296,7 +296,7 @@ arv_viewer_set_options (ArvViewer *viewer,
 
 static double
 arv_viewer_value_to_log (double value, double min, double max)
-{
+{	_entry:;
 	if (min >= max)
 		return 1.0;
 
@@ -308,7 +308,7 @@ arv_viewer_value_to_log (double value, double min, double max)
 
 static double
 arv_viewer_value_from_log (double value, double min, double max)
-{
+{	_entry:;
 	if (min <= 0.0 || max <= 0)
 		return 0.0;
 
@@ -329,7 +329,7 @@ typedef struct {
 
 static void
 gst_buffer_release_cb (void *user_data)
-{
+{	_entry:;
 	ArvGstBufferReleaseData* release_data = user_data;
 
 	ArvStream* stream = g_weak_ref_get (&release_data->stream);
@@ -355,7 +355,7 @@ gst_buffer_release_cb (void *user_data)
 
 static GstBuffer *
 arv_to_gst_buffer (ArvBuffer *arv_buffer, ArvStream *stream)
-{
+{	_entry:;
 	ArvGstBufferReleaseData* release_data;
 	int arv_row_stride;
 	int width, height;
@@ -400,7 +400,7 @@ arv_to_gst_buffer (ArvBuffer *arv_buffer, ArvStream *stream)
 
 static void
 new_buffer_cb (ArvStream *stream, ArvViewer *viewer)
-{
+{	_entry:;
 	ArvBuffer *arv_buffer;
 	gint n_input_buffers, n_output_buffers;
 
@@ -433,7 +433,7 @@ new_buffer_cb (ArvStream *stream, ArvViewer *viewer)
 
 static void
 frame_rate_entry_cb (GtkEntry *entry, ArvViewer *viewer)
-{
+{	_entry:;
 	char *text;
 	double frame_rate;
 
@@ -450,7 +450,7 @@ frame_rate_entry_cb (GtkEntry *entry, ArvViewer *viewer)
 static gboolean
 frame_rate_entry_focus_cb (GtkEntry *entry, GdkEventFocus *event,
 		    ArvViewer *viewer)
-{
+{	_entry:;
 	frame_rate_entry_cb (entry, viewer);
 
 	return FALSE;
@@ -458,7 +458,7 @@ frame_rate_entry_focus_cb (GtkEntry *entry, GdkEventFocus *event,
 
 static void
 exposure_spin_cb (GtkSpinButton *spin_button, ArvViewer *viewer)
-{
+{	_entry:;
 	double exposure = gtk_spin_button_get_value (spin_button);
 	double log_exposure = arv_viewer_value_to_log (exposure, viewer->exposure_min, viewer->exposure_max);
 
@@ -473,7 +473,7 @@ exposure_spin_cb (GtkSpinButton *spin_button, ArvViewer *viewer)
 
 static void
 gain_spin_cb (GtkSpinButton *spin_button, ArvViewer *viewer)
-{
+{	_entry:;
 	gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (viewer->auto_gain_toggle), FALSE);
 
 	arv_camera_set_gain (viewer->camera, gtk_spin_button_get_value (spin_button), NULL);
@@ -485,7 +485,7 @@ gain_spin_cb (GtkSpinButton *spin_button, ArvViewer *viewer)
 
 static void
 exposure_scale_cb (GtkRange *range, ArvViewer *viewer)
-{
+{	_entry:;
 	double log_exposure = gtk_range_get_value (range);
 	double exposure = arv_viewer_value_from_log (log_exposure, viewer->exposure_min, viewer->exposure_max);
 
@@ -500,7 +500,7 @@ exposure_scale_cb (GtkRange *range, ArvViewer *viewer)
 
 static void
 gain_scale_cb (GtkRange *range, ArvViewer *viewer)
-{
+{	_entry:;
 	gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (viewer->auto_gain_toggle), FALSE);
 
 	arv_camera_set_gain (viewer->camera, gtk_range_get_value (range), NULL);
@@ -512,7 +512,7 @@ gain_scale_cb (GtkRange *range, ArvViewer *viewer)
 
 gboolean
 update_exposure_cb (void *data)
-{
+{	_entry:;
 	ArvViewer *viewer = data;
 	double exposure;
 	double log_exposure;
@@ -532,7 +532,7 @@ update_exposure_cb (void *data)
 
 static void
 update_exposure_ui (ArvViewer *viewer, gboolean is_auto)
-{
+{	_entry:;
 	update_exposure_cb (viewer);
 
 	if (viewer->exposure_update_event > 0) {
@@ -546,7 +546,7 @@ update_exposure_ui (ArvViewer *viewer, gboolean is_auto)
 
 static void
 auto_exposure_cb (GtkToggleButton *toggle, ArvViewer *viewer)
-{
+{	_entry:;
 	gboolean is_auto;
 
 	is_auto = gtk_toggle_button_get_active (toggle);
@@ -557,7 +557,7 @@ auto_exposure_cb (GtkToggleButton *toggle, ArvViewer *viewer)
 
 static gboolean
 update_gain_cb (void *data)
-{
+{	trllog();
 	ArvViewer *viewer = data;
 	double gain;
 
@@ -575,7 +575,7 @@ update_gain_cb (void *data)
 
 static void
 update_gain_ui (ArvViewer *viewer, gboolean is_auto)
-{
+{	_entry:;
 	update_gain_cb (viewer);
 
 	if (viewer->gain_update_event > 0) {
@@ -591,7 +591,7 @@ update_gain_ui (ArvViewer *viewer, gboolean is_auto)
 
 void
 auto_gain_cb (GtkToggleButton *toggle, ArvViewer *viewer)
-{
+{	_entry:;
 	gboolean is_auto;
 
 	is_auto = gtk_toggle_button_get_active (toggle);
@@ -605,7 +605,7 @@ update_camera_region (ArvViewer *viewer);
 
 static void
 set_camera_widgets(ArvViewer *viewer)
-{
+{	//_entry:;
 	trlvx(viewer->camera);
 	if (!viewer->camera && viewer->src) {
 		viewer->camera = ((GstAravis*)viewer->src)->camera;
@@ -684,7 +684,7 @@ set_camera_widgets(ArvViewer *viewer)
 #if ORIG
 void
 snapshot_cb (GtkButton *button, ArvViewer *viewer)
-{
+{	_entry:;
 	GFile *file;
 	char *path;
 	char *filename;
@@ -738,7 +738,7 @@ snapshot_cb (GtkButton *button, ArvViewer *viewer)
 
 static void
 update_transform (ArvViewer *viewer)
-{
+{	_entry:;
 	static const gint methods[4][4] = {
 		{0, 1, 2, 3},
 		{4, 6, 5, 7},
@@ -752,7 +752,7 @@ update_transform (ArvViewer *viewer)
 
 static void
 rotate_cw_cb (GtkButton *button, ArvViewer *viewer)
-{
+{	_entry:;
 	viewer->rotation = (viewer->rotation + 1) % 4;
 
 	update_transform (viewer);
@@ -760,7 +760,7 @@ rotate_cw_cb (GtkButton *button, ArvViewer *viewer)
 
 static void
 flip_horizontal_cb (GtkToggleButton *toggle, ArvViewer *viewer)
-{
+{	_entry:;
 	viewer->flip_horizontal = gtk_toggle_button_get_active (toggle);
 
 	update_transform (viewer);
@@ -768,7 +768,7 @@ flip_horizontal_cb (GtkToggleButton *toggle, ArvViewer *viewer)
 
 static void
 flip_vertical_cb (GtkToggleButton *toggle, ArvViewer *viewer)
-{
+{	_entry:;
 	viewer->flip_vertical = gtk_toggle_button_get_active (toggle);
 
 	update_transform (viewer);
@@ -776,7 +776,7 @@ flip_vertical_cb (GtkToggleButton *toggle, ArvViewer *viewer)
 
 static void
 stream_cb (void *user_data, ArvStreamCallbackType type, ArvBuffer *buffer)
-{
+{	_entry:;
 	if (type == ARV_STREAM_CALLBACK_TYPE_INIT) {
 		if (!arv_make_thread_realtime (10) &&
 		    !arv_make_thread_high_priority (-10))
@@ -786,14 +786,14 @@ stream_cb (void *user_data, ArvStreamCallbackType type, ArvBuffer *buffer)
 #endif
 
 float timer_diff(struct timeval *t2, struct timeval *t1)
-{
+{	//_entry:;
 	struct timeval d;
 	timersub(t2, t1, &d);
 	return d.tv_sec + d.tv_usec / 1e6;
 }
 
 int get_usage(int *user, int *kernel, int *idle)
-{
+{	//_entry:;
 	/*
 	   static struct timespec t1;
 	   struct timespec t2;
@@ -903,7 +903,7 @@ exit:
 #if ORIG
 static gboolean
 update_status_bar_cb (void *data)
-{
+{	_entry:;
 	ArvViewer *viewer = data;
 	char *text;
 	gint64 time_ms = g_get_real_time () / 1000;
@@ -936,7 +936,7 @@ update_status_bar_cb (void *data)
 
 static void
 update_camera_region (ArvViewer *viewer)
-{
+{	_entry:;
 	gint x, y, width, height;
 	gint dx, dy;
 	gint min, max;
@@ -1001,7 +1001,7 @@ update_camera_region (ArvViewer *viewer)
 
 void
 camera_region_cb (GtkSpinButton *spin_button, ArvViewer *viewer)
-{
+{	_entry:;
 	int x = gtk_spin_button_get_value (GTK_SPIN_BUTTON (viewer->camera_x));
 	int y = gtk_spin_button_get_value (GTK_SPIN_BUTTON (viewer->camera_y));
 	int width = gtk_spin_button_get_value (GTK_SPIN_BUTTON (viewer->camera_width));
@@ -1014,7 +1014,7 @@ camera_region_cb (GtkSpinButton *spin_button, ArvViewer *viewer)
 
 void
 camera_binning_cb (GtkSpinButton *spin_button, ArvViewer *viewer)
-{
+{	_entry:;
 	int dx = gtk_spin_button_get_value (GTK_SPIN_BUTTON (viewer->camera_binning_x));
 	int dy = gtk_spin_button_get_value (GTK_SPIN_BUTTON (viewer->camera_binning_y));
 
@@ -1072,7 +1072,7 @@ update_device_list_cb (GtkToolButton *button, ArvViewer *viewer)
 
 static void
 remove_widget (GtkWidget *widget, gpointer data)
-{
+{	_entry:;
 	gtk_container_remove (data, widget);
 	g_object_unref (widget);
 }
@@ -1131,7 +1131,7 @@ stop_video (ArvViewer *viewer)
 #if ORIG
 static GstBusSyncReply
 bus_sync_handler (GstBus *bus, GstMessage *message, gpointer user_data)
-{
+{	_entry:;
 	ArvViewer *viewer = user_data;
 
 	if (!gst_is_video_overlay_prepare_window_handle_message(message))
@@ -1154,7 +1154,7 @@ bus_sync_handler (GstBus *bus, GstMessage *message, gpointer user_data)
 
 gboolean
 gst_bin_add_link_many (GstElement * bin, GstElement * a, GstElement * b, ...)
-{
+{	_entry:;
 	va_list args;
 	gboolean res = TRUE;
 
@@ -1252,7 +1252,7 @@ void rec_make(ArvViewer *ctx)
 
 
 void rec_start(ArvViewer *ctx)
-{
+{	_entry:;
 	/*
 	   aravissrc ! videoconvert ! tee name=t \
 	   t. ! queue ! omxh264enc ! matroskamux ! filesink location=264.mkv \
@@ -1283,7 +1283,7 @@ void rec_start(ArvViewer *ctx)
 }
 
 static GstPadProbeReturn unlink_cb(GstPad *pad, GstPadProbeInfo *info, ArvViewer *ctx)
-{
+{	_entry:;
 	if (!ctx->rec_pad)
 		return GST_PAD_PROBE_REMOVE;
 	trlvd(GST_OBJECT_REFCOUNT(ctx->rec_q));
@@ -1312,7 +1312,7 @@ void rec_stop(ArvViewer *ctx)
 }
 
 int make_video (ArvViewer *viewer)
-{
+{	_entry:;
 	trl();
 #if __x86_64__ || videotestsrc
 	viewer->src = gst_element_factory_make ("videotestsrc", 0);
@@ -1362,7 +1362,7 @@ int make_video (ArvViewer *viewer)
 }
 
 int start_video2(ArvViewer *ctx)
-{
+{	_entry:;
 	trl();
 	gst_element_set_state (ctx->pipeline, GST_STATE_PLAYING);
 	if (ctx->camera)
@@ -1375,7 +1375,7 @@ int start_video2(ArvViewer *ctx)
 #if ORIG
 static gboolean
 start_video (ArvViewer *viewer)
-{
+{	_entry:;
 	GstElement *videoconvert;
 	GstElement *videosink;
 	GstCaps *caps;
@@ -1508,6 +1508,7 @@ start_video (ArvViewer *viewer)
 	g_object_set(G_OBJECT (viewer->appsrc), "format", GST_FORMAT_TIME, "is-live", TRUE, "do-timestamp", TRUE, NULL);
 
 	if (!has_gtkglsink && !has_gtksink) {
+		// supposed autovideosink
 		GstBus *bus;
 
 		bus = gst_pipeline_get_bus (GST_PIPELINE (viewer->pipeline));
@@ -1533,7 +1534,7 @@ start_video (ArvViewer *viewer)
 
 static gboolean
 select_camera_list_mode (gpointer user_data)
-{
+{	_entry:;
 	ArvViewer *viewer = user_data;
 
 	select_mode (viewer, ARV_VIEWER_MODE_CAMERA_LIST);
@@ -1544,13 +1545,13 @@ select_camera_list_mode (gpointer user_data)
 
 static void
 control_lost_cb (ArvCamera *camera, ArvViewer *viewer)
-{
+{	_entry:;
 	g_main_context_invoke (NULL, select_camera_list_mode, viewer);
 }
 
 static void
 stop_camera (ArvViewer *viewer)
-{
+{	_entry:;
 	gtk_widget_set_sensitive (viewer->camera_parameters, FALSE);
 	gtk_widget_set_sensitive (viewer->video_mode_button, FALSE);
 	stop_video (viewer);
@@ -1560,7 +1561,7 @@ stop_camera (ArvViewer *viewer)
 
 static gboolean
 start_camera (ArvViewer *viewer, const char *camera_id)
-{
+{	_entry:;
 	GtkTreeIter iter;
 	GtkListStore *list_store;
 	gint64 *pixel_formats;
@@ -1622,7 +1623,7 @@ start_camera (ArvViewer *viewer, const char *camera_id)
 
 static void
 camera_selection_changed_cb (GtkTreeSelection *selection, ArvViewer *viewer)
-{
+{	_entry:;
 	GtkTreeIter iter;
 	GtkTreeModel *tree_model;
 	char *camera_id = NULL;
@@ -1637,7 +1638,7 @@ camera_selection_changed_cb (GtkTreeSelection *selection, ArvViewer *viewer)
 
 static void
 select_mode (ArvViewer *viewer, ArvViewerMode mode)
-{
+{	_entry:;
 	gboolean video_visibility;
 	char *subtitle;
 	gint width, height, x, y;
@@ -1685,27 +1686,24 @@ select_mode (ArvViewer *viewer, ArvViewerMode mode)
 
 void
 switch_to_camera_list_cb (GtkToolButton *button, ArvViewer *viewer)
-{
+{	_entry:;
 	select_mode (viewer, ARV_VIEWER_MODE_CAMERA_LIST);
 }
 
 void
 switch_to_video_mode_cb (GtkToolButton *button, ArvViewer *viewer)
-{
+{	_entry:;
 	select_mode (viewer, ARV_VIEWER_MODE_VIDEO);
 }
 #endif
 
 void
 arv_viewer_quit_cb (GtkApplicationWindow *window, ArvViewer *viewer)
-{
-	trl();
-	alarm(10);
+{	_entry:;
+	alarm(5);
 #if ORIG
 	stop_camera (viewer);
 #else
-	gst_element_send_event (viewer->pipeline, gst_event_new_eos ());
-	sleep(1);
 	stop_video(viewer);
 #endif
 	g_application_quit (G_APPLICATION (viewer)); // stops g_application_run
@@ -1713,7 +1711,7 @@ arv_viewer_quit_cb (GtkApplicationWindow *window, ArvViewer *viewer)
 
 static void
 video_frame_realize_cb (GtkWidget * widget, ArvViewer *viewer)
-{
+{	_entry:;
 #ifdef GDK_WINDOWING_X11
 	viewer->video_window_xid = GDK_WINDOW_XID (gtk_widget_get_window (widget));
 #endif
@@ -1732,13 +1730,16 @@ void rec_switch(GtkToggleButton *toggle, ArvViewer *ctx)
 
 static void
 activate (GApplication *application)
-{
+{	_entry:;
+	trl();
 	ArvViewer *viewer = (ArvViewer *) application;
 	g_autoptr (GtkBuilder) builder;
 #if ORIG
 	builder = gtk_builder_new_from_resource ("/org/aravis/viewer/arv-viewer.ui");
 #else
 	builder = gtk_builder_new_from_resource ("/org/argos/viewer/argos.ui");
+	g_signal_connect(GTK_WIDGET (gtk_builder_get_object (builder, "rec")),
+			 "clicked", G_CALLBACK(rec_switch), viewer);
 #endif
 
 	viewer->main_window = GTK_WIDGET (gtk_builder_get_object (builder, "main_window"));
@@ -1849,7 +1850,7 @@ activate (GApplication *application)
 
 static void
 startup (GApplication *application)
-{
+{	_entry:;
 	arv_enable_interface ("Fake");
 
 	G_APPLICATION_CLASS (arv_viewer_parent_class)->startup (application);
@@ -1857,7 +1858,8 @@ startup (GApplication *application)
 
 static void
 shutdown (GApplication *application)
-{
+{	_entry:;
+	trl();
 	G_APPLICATION_CLASS (arv_viewer_parent_class)->shutdown (application);
 
 	arv_shutdown ();
@@ -1865,11 +1867,12 @@ shutdown (GApplication *application)
 
 static void
 finalize (GObject *object)
-{
+{	_entry:;
+	trl();
 	ArvViewer *viewer = (ArvViewer *) object;
-#if !ORIG
-	stop_video(viewer);
-#endif
+//#if !ORIG
+//	stop_video(viewer);
+//#endif
 	G_OBJECT_CLASS (arv_viewer_parent_class)->finalize (object);
 
 	g_clear_object (&viewer->notification);
@@ -1878,15 +1881,16 @@ finalize (GObject *object)
 ArvViewer *arv_viewer;
 
 static void set_cancel (int s)
-{
+{	_entry:;
 	signal(SIGINT, 0);
+  	signal(SIGALRM, 0);
 	//arv_viewer_quit_cb(0, arv_viewer);
-	g_signal_emit_by_name(arv_viewer->main_window, "destroy");
+	g_signal_emit_by_name(arv_viewer->main_window, "destroy"); // calls arv_viewer_quit_cb
 }
 
 ArvViewer *
 arv_viewer_new (void)
-{
+{	_entry:;
 
 #if ORIG
   if (!gstreamer_plugin_check ())
@@ -1913,7 +1917,7 @@ arv_viewer_new (void)
 
 static void
 arv_viewer_init (ArvViewer *viewer)
-{
+{	_entry:;
 	viewer->notification = notify_notification_new (NULL, NULL, NULL);
 	viewer->auto_socket_buffer = FALSE;
 	viewer->packet_resend = TRUE;
@@ -1924,7 +1928,8 @@ arv_viewer_init (ArvViewer *viewer)
 
 static void
 arv_viewer_class_init (ArvViewerClass *class)
-{
+{	_entry:;
+	trl();
   GApplicationClass *application_class = G_APPLICATION_CLASS (class);
   GObjectClass *object_class = G_OBJECT_CLASS (class);
 

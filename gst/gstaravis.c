@@ -76,7 +76,7 @@ static GstStaticPadTemplate aravis_src_template = GST_STATIC_PAD_TEMPLATE ("src"
 
 static GstCaps *
 gst_aravis_get_all_camera_caps (GstAravis *gst_aravis)
-{
+{	_entry:;
 	GstCaps *caps;
 	gint64 *pixel_formats;
 	double min_frame_rate, max_frame_rate;
@@ -132,7 +132,7 @@ gst_aravis_get_all_camera_caps (GstAravis *gst_aravis)
 
 static GstCaps *
 gst_aravis_get_caps (GstBaseSrc * src, GstCaps * filter)
-{
+{	_entry:;
 	GstAravis* gst_aravis = GST_ARAVIS(src);
 	GstCaps *caps;
 
@@ -148,7 +148,7 @@ gst_aravis_get_caps (GstBaseSrc * src, GstCaps * filter)
 
 static gboolean
 gst_aravis_set_caps (GstBaseSrc *src, GstCaps *caps)
-{
+{	_entry:;
 	GstAravis* gst_aravis = GST_ARAVIS(src);
 	GstStructure *structure;
 	ArvPixelFormat pixel_format;
@@ -291,7 +291,7 @@ gst_aravis_set_caps (GstBaseSrc *src, GstCaps *caps)
 
 static gboolean
 gst_aravis_init_camera (GstAravis *gst_aravis)
-{
+{	_entry:;
 	GError *error = NULL;
 
 	if (gst_aravis->camera != NULL)
@@ -340,7 +340,7 @@ gst_aravis_init_camera (GstAravis *gst_aravis)
 
 static gboolean
 gst_aravis_start (GstBaseSrc *src)
-{
+{	_entry:;
 	gboolean result = TRUE;
 	GstAravis* gst_aravis = GST_ARAVIS(src);
 
@@ -356,7 +356,7 @@ gst_aravis_start (GstBaseSrc *src)
 
 
 gboolean gst_aravis_stop( GstBaseSrc * src )
-{
+{	_entry:;
         GstAravis* gst_aravis = GST_ARAVIS(src);
 
 	arv_camera_stop_acquisition (gst_aravis->camera, NULL);
@@ -371,6 +371,9 @@ gboolean gst_aravis_stop( GstBaseSrc * src )
 		gst_aravis->all_caps = NULL;
 	}
 
+	trlvd(GST_OBJECT_REFCOUNT(src));
+	trvs(GST_OBJECT_NAME(src));
+
         GST_DEBUG_OBJECT (gst_aravis, "Stop acquisition");
 
         return TRUE;
@@ -379,7 +382,7 @@ gboolean gst_aravis_stop( GstBaseSrc * src )
 static void
 gst_aravis_get_times (GstBaseSrc * basesrc, GstBuffer * buffer,
 		      GstClockTime * start, GstClockTime * end)
-{
+{	trllog();
 	if (gst_base_src_is_live (basesrc)) {
 		GstClockTime timestamp = GST_BUFFER_PTS (buffer);
 
@@ -399,7 +402,7 @@ gst_aravis_get_times (GstBaseSrc * basesrc, GstBuffer * buffer,
 
 static GstFlowReturn
 gst_aravis_create (GstPushSrc * push_src, GstBuffer ** buffer)
-{
+{	trllog();
 	GstAravis *gst_aravis;
 	ArvBuffer *arv_buffer;
 	int arv_row_stride;
@@ -464,7 +467,7 @@ gst_aravis_create (GstPushSrc * push_src, GstBuffer ** buffer)
 
 static GstCaps *
 gst_aravis_fixate_caps (GstBaseSrc * bsrc, GstCaps * caps)
-{
+{	_entry:;
 	GstAravis *gst_aravis = GST_ARAVIS (bsrc);
 	GstStructure *structure;
 	gint width;
@@ -487,7 +490,7 @@ gst_aravis_fixate_caps (GstBaseSrc * bsrc, GstCaps * caps)
 
 static void
 gst_aravis_init (GstAravis *gst_aravis)
-{
+{	_entry:;
 	gst_base_src_set_live (GST_BASE_SRC (gst_aravis), TRUE);
 	gst_base_src_set_format (GST_BASE_SRC (gst_aravis), GST_FORMAT_TIME);
 
@@ -518,7 +521,7 @@ gst_aravis_init (GstAravis *gst_aravis)
 
 static void
 gst_aravis_finalize (GObject * object)
-{
+{	_entry:;
         GstAravis *gst_aravis = GST_ARAVIS (object);
 
 	if (gst_aravis->camera != NULL) {
@@ -541,6 +544,7 @@ gst_aravis_finalize (GObject * object)
 	g_free (gst_aravis->camera_name);
 	gst_aravis->camera_name = NULL;
 	g_clear_pointer (&gst_aravis->features, g_free);
+	trlvd(GST_OBJECT_REFCOUNT(object));
 
         G_OBJECT_CLASS (gst_aravis_parent_class)->finalize (object);
 }
@@ -548,9 +552,8 @@ gst_aravis_finalize (GObject * object)
 static void
 gst_aravis_set_property (GObject * object, guint prop_id,
 			 const GValue * value, GParamSpec * pspec)
-{
+{	_entry:;
 	GstAravis *gst_aravis = GST_ARAVIS (object);
-	trl();
 	switch (prop_id) {
 		case PROP_CAMERA_NAME:
 			g_free (gst_aravis->camera_name);
@@ -621,7 +624,7 @@ gst_aravis_set_property (GObject * object, guint prop_id,
 static void
 gst_aravis_get_property (GObject * object, guint prop_id, GValue * value,
 			 GParamSpec * pspec)
-{
+{	_entry:;
 	GstAravis *gst_aravis = GST_ARAVIS (object);
 
 	switch (prop_id) {
@@ -678,7 +681,7 @@ gst_aravis_get_property (GObject * object, guint prop_id, GValue * value,
 
 static void
 gst_aravis_class_init (GstAravisClass * klass)
-{
+{	_entry:;
 	GObjectClass *gobject_class = G_OBJECT_CLASS (klass);
 	GstElementClass *element_class = GST_ELEMENT_CLASS (klass);
 	GstBaseSrcClass *gstbasesrc_class = GST_BASE_SRC_CLASS (klass);
@@ -836,7 +839,7 @@ gst_aravis_class_init (GstAravisClass * klass)
 
 static gboolean
 plugin_init (GstPlugin * plugin)
-{
+{	_entry:;
         return gst_element_register (plugin, "aravissrc", GST_RANK_NONE, GST_TYPE_ARAVIS);
 }
 

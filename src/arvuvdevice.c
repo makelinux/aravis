@@ -92,7 +92,7 @@ void arv_uv_device_fill_bulk_transfer (struct libusb_transfer* transfer, ArvUvDe
 				void *data, size_t size,
 				libusb_transfer_cb_fn callback, void* callback_data,
 				unsigned int timeout)
-{
+{	_entry:;
 	guint8 endpoint;
 	ArvUvDevicePrivate *priv = arv_uv_device_get_instance_private (uv_device);
 
@@ -104,7 +104,7 @@ void arv_uv_device_fill_bulk_transfer (struct libusb_transfer* transfer, ArvUvDe
 gboolean
 arv_uv_device_bulk_transfer (ArvUvDevice *uv_device, ArvUvEndpointType endpoint_type, unsigned char endpoint_flags, void *data,
 			     size_t size, size_t *transferred_size, guint32 timeout_ms, GError **error)
-{
+{	_entry:;
 	ArvUvDevicePrivate *priv = arv_uv_device_get_instance_private (uv_device);
 	gboolean success;
 	guint8 endpoint;
@@ -145,13 +145,13 @@ arv_uv_device_bulk_transfer (ArvUvDevice *uv_device, ArvUvEndpointType endpoint_
 
 static ArvStream *
 arv_uv_device_create_stream (ArvDevice *device, ArvStreamCallback callback, void *user_data, GError **error)
-{
+{	_entry:;
 	return arv_uv_stream_new (ARV_UV_DEVICE (device), callback, user_data, error);
 }
 
 static gboolean
 _read_memory (ArvUvDevice *uv_device, guint64 address, guint32 size, void *buffer, GError **error)
-{
+{	_entry:;
 	ArvUvDevicePrivate *priv = arv_uv_device_get_instance_private (uv_device);
 	ArvUvcpPacket *packet;
 	void *read_packet;
@@ -263,7 +263,7 @@ _read_memory (ArvUvDevice *uv_device, guint64 address, guint32 size, void *buffe
 
 static gboolean
 arv_uv_device_read_memory (ArvDevice *device, guint64 address, guint32 size, void *buffer, GError **error)
-{
+{	_entry:;
 	ArvUvDevice *uv_device = ARV_UV_DEVICE (device);
 	ArvUvDevicePrivate *priv = arv_uv_device_get_instance_private (uv_device);
 	int i;
@@ -289,7 +289,7 @@ arv_uv_device_read_memory (ArvDevice *device, guint64 address, guint32 size, voi
 
 static gboolean
 _write_memory (ArvUvDevice *uv_device, guint64 address, guint32 size, void *buffer, GError **error)
-{
+{	//_entry:;
 	ArvUvDevicePrivate *priv = arv_uv_device_get_instance_private (uv_device);
 	ArvUvcpPacket *packet;
 	void *read_packet;
@@ -401,7 +401,7 @@ _write_memory (ArvUvDevice *uv_device, guint64 address, guint32 size, void *buff
 
 static gboolean
 arv_uv_device_write_memory (ArvDevice *device, guint64 address, guint32 size, void *buffer, GError **error)
-{
+{	//_entry:;
 	ArvUvDevice *uv_device = ARV_UV_DEVICE (device);
 	ArvUvDevicePrivate *priv = arv_uv_device_get_instance_private (uv_device);
 	int i;
@@ -427,19 +427,19 @@ arv_uv_device_write_memory (ArvDevice *device, guint64 address, guint32 size, vo
 
 static gboolean
 arv_uv_device_read_register (ArvDevice *device, guint64 address, guint32 *value, GError **error)
-{
+{	_entry:;
 	return arv_uv_device_read_memory (device, address, sizeof (guint32), value, error);
 }
 
 static gboolean
 arv_uv_device_write_register (ArvDevice *device, guint64 address, guint32 value, GError **error)
-{
+{	_entry:;
 	return arv_uv_device_write_memory (device, address, sizeof (guint32), &value, error);
 }
 
 static gboolean
 _bootstrap (ArvUvDevice *uv_device)
-{
+{	_entry:;
 	ArvUvDevicePrivate *priv = arv_uv_device_get_instance_private (uv_device);
 	ArvDevice *device = ARV_DEVICE (uv_device);
 	guint64 offset;
@@ -632,7 +632,7 @@ _bootstrap (ArvUvDevice *uv_device)
 
 static ArvGc *
 arv_uv_device_get_genicam (ArvDevice *device)
-{
+{	//_entry:;
 	ArvUvDevicePrivate *priv = arv_uv_device_get_instance_private (ARV_UV_DEVICE (device));
 
 	return priv->genicam;
@@ -640,7 +640,7 @@ arv_uv_device_get_genicam (ArvDevice *device)
 
 static const char *
 arv_uv_device_get_genicam_xml (ArvDevice *device, size_t *size)
-{
+{	_entry:;
 	ArvUvDevicePrivate *priv = arv_uv_device_get_instance_private (ARV_UV_DEVICE (device));
 
 	if (size != NULL)
@@ -651,7 +651,7 @@ arv_uv_device_get_genicam_xml (ArvDevice *device, size_t *size)
 
 static void
 reset_endpoint (libusb_device_handle *usb_device, guint8 endpoint, guint8 endpoint_flags)
-{
+{	_entry:;
 	int errcode;
 
 	/* Set endpoint in halt condition */
@@ -679,7 +679,7 @@ reset_endpoint (libusb_device_handle *usb_device, guint8 endpoint, guint8 endpoi
 
 static gboolean
 _open_usb_device (ArvUvDevice *uv_device, GError **error)
-{
+{	_entry:;
 	ArvUvDevicePrivate *priv = arv_uv_device_get_instance_private (uv_device);
 	libusb_device **devices;
 	unsigned i, j, k;
@@ -773,7 +773,7 @@ static GThread* event_thread = NULL;
 
 static gpointer
 event_thread_func(void *ctx)
-{
+{	_entry:;
 	struct timeval tv = { 0, 100 };
 
 	while (event_thread_run)
@@ -798,7 +798,7 @@ event_thread_func(void *ctx)
 
 ArvDevice *
 arv_uv_device_new (const char *vendor, const char *product, const char *serial_number, GError **error)
-{
+{	_entry:;
 	return g_initable_new (ARV_TYPE_UV_DEVICE, NULL, error,
 			       "vendor", vendor,
 			       "product", product,
@@ -808,7 +808,7 @@ arv_uv_device_new (const char *vendor, const char *product, const char *serial_n
 
 void
 arv_uv_device_constructed (GObject *object)
-{
+{	_entry:;
 	ArvUvDevice *uv_device = ARV_UV_DEVICE (object);
 	ArvUvDevicePrivate *priv = arv_uv_device_get_instance_private (uv_device);
 	GError *error = NULL;
@@ -867,7 +867,7 @@ arv_uv_device_constructed (GObject *object)
 
 static void
 arv_uv_device_init (ArvUvDevice *uv_device)
-{
+{	_entry:;
 	ArvUvDevicePrivate *priv = arv_uv_device_get_instance_private (uv_device);
 
 	priv->cmd_packet_size_max = 65536 + sizeof (ArvUvcpHeader);
@@ -877,12 +877,13 @@ arv_uv_device_init (ArvUvDevice *uv_device)
 
 static void
 arv_uv_device_finalize (GObject *object)
-{
+{	_entry:;
 	ArvUvDevice *uv_device = ARV_UV_DEVICE (object);
 	ArvUvDevicePrivate *priv = arv_uv_device_get_instance_private (uv_device);
-	trlm("{");
 	event_thread_run = 0;
+	trlm("joining ...");
 	g_thread_join( event_thread );
+	trlm("joined");
 
 	g_clear_object (&priv->genicam);
 
@@ -900,12 +901,11 @@ arv_uv_device_finalize (GObject *object)
 	libusb_exit (priv->usb);
 	trl();
 	G_OBJECT_CLASS (arv_uv_device_parent_class)->finalize (object);
-	trlm("}");
 }
 
 static void
 arv_uv_device_set_property (GObject *self, guint prop_id, const GValue *value, GParamSpec *pspec)
-{
+{	_entry:;
 	ArvUvDevicePrivate *priv = arv_uv_device_get_instance_private (ARV_UV_DEVICE (self));
 
 	switch (prop_id)
@@ -930,7 +930,7 @@ arv_uv_device_set_property (GObject *self, guint prop_id, const GValue *value, G
 
 static void
 arv_uv_device_class_init (ArvUvDeviceClass *uv_device_class)
-{
+{	_entry:;
 	GObjectClass *object_class = G_OBJECT_CLASS (uv_device_class);
 	ArvDeviceClass *device_class = ARV_DEVICE_CLASS (uv_device_class);
 
@@ -974,7 +974,7 @@ arv_uv_device_class_init (ArvUvDeviceClass *uv_device_class)
 
 void
 arv_device_reset (ArvDevice *device)
-{
+{	_entry:;
 	ArvUvDevice *uv_device = ARV_UV_DEVICE (device);
 	ArvUvDevicePrivate *priv = arv_uv_device_get_instance_private(uv_device);
 	if (priv)

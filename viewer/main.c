@@ -134,7 +134,7 @@ main (int argc, char **argv)
 
 	status = g_application_run (G_APPLICATION (viewer), argc, argv);
 
-	g_object_unref (viewer);
+	g_object_unref (viewer); // calls finalize
 
 	notify_uninit ();
 

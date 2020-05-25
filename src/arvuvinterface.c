@@ -50,7 +50,7 @@ static ArvUvInterfaceDeviceInfos *
 arv_uv_interface_device_infos_new (const char *manufacturer,
 				   const char *product,
 				   const char *serial_nbr)
-{
+{	_entry:;
 	ArvUvInterfaceDeviceInfos *infos;
 
 	g_return_val_if_fail (manufacturer != NULL, NULL);
@@ -73,7 +73,7 @@ arv_uv_interface_device_infos_new (const char *manufacturer,
 
 static ArvUvInterfaceDeviceInfos *
 arv_uv_interface_device_infos_ref (ArvUvInterfaceDeviceInfos *infos)
-{
+{	_entry:;
 	g_return_val_if_fail (infos != NULL, NULL);
 	g_return_val_if_fail (g_atomic_int_get (&infos->ref_count) > 0, NULL);
 
@@ -84,7 +84,7 @@ arv_uv_interface_device_infos_ref (ArvUvInterfaceDeviceInfos *infos)
 
 static void
 arv_uv_interface_device_infos_unref (ArvUvInterfaceDeviceInfos *infos)
-{
+{	_entry:;
 	g_return_if_fail (infos != NULL);
 	g_return_if_fail (g_atomic_int_get (&infos->ref_count) > 0);
 
@@ -116,7 +116,7 @@ struct _ArvUvInterfaceClass {
 #if 0
 static void
 printdev (libusb_device *device)
-{
+{	_entry:;
 	struct libusb_device_descriptor desc;
 	struct libusb_config_descriptor *config;
 	const struct libusb_interface *inter;
@@ -154,7 +154,7 @@ printdev (libusb_device *device)
 
 ArvInterfaceDeviceIds *
 _usb_device_to_device_ids (ArvUvInterface *uv_interface, libusb_device *device)
-{
+{	_entry:;
 	ArvInterfaceDeviceIds *device_ids = NULL;
 	libusb_device_handle *device_handle;
 	struct libusb_device_descriptor desc;
@@ -247,7 +247,7 @@ _usb_device_to_device_ids (ArvUvInterface *uv_interface, libusb_device *device)
 
 static void
 _discover (ArvUvInterface *uv_interface,  GArray *device_ids)
-{
+{	_entry:;
 	libusb_device **devices;
 	unsigned uv_count = 0;
 	ssize_t count;
@@ -289,7 +289,7 @@ _discover (ArvUvInterface *uv_interface,  GArray *device_ids)
 
 static void
 arv_uv_interface_update_device_list (ArvInterface *interface, GArray *device_ids)
-{
+{	_entry:;
 	ArvUvInterface *uv_interface = ARV_UV_INTERFACE (interface);
 
 	g_assert (device_ids->len == 0);
@@ -299,7 +299,7 @@ arv_uv_interface_update_device_list (ArvInterface *interface, GArray *device_ids
 
 static ArvDevice *
 _open_device (ArvInterface *interface, const char *device_id, GError **error)
-{
+{	_entry:;
 	ArvUvInterface *uv_interface;
 	ArvUvInterfaceDeviceInfos *device_infos;
 
@@ -322,7 +322,7 @@ _open_device (ArvInterface *interface, const char *device_id, GError **error)
 
 static ArvDevice *
 arv_uv_interface_open_device (ArvInterface *interface, const char *device_id, GError **error)
-{
+{	_entry:;
 	ArvDevice *device;
 	GError *local_error = NULL;
 
@@ -351,7 +351,7 @@ static GMutex uv_interface_mutex;
 
 ArvInterface *
 arv_uv_interface_get_instance (void)
-{
+{	_entry:;
 	g_mutex_lock (&uv_interface_mutex);
 
 	if (uv_interface == NULL)
@@ -364,7 +364,7 @@ arv_uv_interface_get_instance (void)
 
 void
 arv_uv_interface_destroy_instance (void)
-{
+{	_entry:;
 	g_mutex_lock (&uv_interface_mutex);
 
 	g_clear_object (&uv_interface);
@@ -376,7 +376,7 @@ G_DEFINE_TYPE_WITH_CODE (ArvUvInterface, arv_uv_interface, ARV_TYPE_INTERFACE, G
 
 static void
 arv_uv_interface_init (ArvUvInterface *uv_interface)
-{
+{	_entry:;
 	uv_interface->priv = arv_uv_interface_get_instance_private (uv_interface);
 
 	libusb_init (&uv_interface->priv->usb);
@@ -386,7 +386,7 @@ arv_uv_interface_init (ArvUvInterface *uv_interface)
 
 static void
 arv_uv_interface_finalize (GObject *object)
-{
+{	_entry:;
 	ArvUvInterface *uv_interface = ARV_UV_INTERFACE (object);
 
 	g_hash_table_unref (uv_interface->priv->devices);
@@ -398,7 +398,7 @@ arv_uv_interface_finalize (GObject *object)
 
 static void
 arv_uv_interface_class_init (ArvUvInterfaceClass *uv_interface_class)
-{
+{	_entry:;
 	GObjectClass *object_class = G_OBJECT_CLASS (uv_interface_class);
 	ArvInterfaceClass *interface_class = ARV_INTERFACE_CLASS (uv_interface_class);
 

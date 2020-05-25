@@ -103,7 +103,7 @@ int mode_sync;
 
 static void
 arv_uv_stream_buffer_context_wait_transfer_completed (ArvUvStreamBufferContext* ctx)
-{
+{	_entry:;
 	//trlvx(ctx->buffer);
 	g_mutex_lock( ctx->transfer_completed_mtx );
 	//trlvd(ctx->num_submitted);
@@ -115,7 +115,7 @@ arv_uv_stream_buffer_context_wait_transfer_completed (ArvUvStreamBufferContext* 
 
 static void
 arv_uv_stream_buffer_context_notify_transfer_completed (ArvUvStreamBufferContext* ctx)
-{
+{	_entry:;
 	//trlvx(ctx->buffer);
 	g_mutex_lock( ctx->transfer_completed_mtx );
 	g_cond_broadcast( ctx->transfer_completed_event );
@@ -123,7 +123,7 @@ arv_uv_stream_buffer_context_notify_transfer_completed (ArvUvStreamBufferContext
 }
 
 void arv_uv_stream_leader_cb (struct libusb_transfer *transfer)
-{
+{	_entry:;
 	ArvUvStreamBufferContext *ctx = transfer->user_data;
 	ArvUvspPacket *packet = (ArvUvspPacket*)transfer->buffer;
 
@@ -165,7 +165,7 @@ void arv_uv_stream_leader_cb (struct libusb_transfer *transfer)
 }
 
 void arv_uv_stream_trailer_cb (struct libusb_transfer *transfer)
-{
+{	_entry:;
 	ArvUvStreamBufferContext *ctx = transfer->user_data;
 	ArvUvspPacket *packet = (ArvUvspPacket*)transfer->buffer;
 
@@ -214,7 +214,7 @@ void arv_uv_stream_trailer_cb (struct libusb_transfer *transfer)
 }
 
 void arv_uv_stream_payload_cb (struct libusb_transfer *transfer)
-{
+{	_entry:;
 	ArvUvStreamBufferContext *ctx = transfer->user_data;
 
 	switch (transfer->status) {
@@ -236,7 +236,7 @@ void arv_uv_stream_payload_cb (struct libusb_transfer *transfer)
 
 static ArvUvStreamBufferContext*
 arv_uv_stream_buffer_context_new (ArvBuffer *buffer, ArvUvStreamThreadData *thread_data, gint *total_submitted_bytes)
-{
+{	_entry:;
 	ArvUvStreamBufferContext* ctx = g_malloc (sizeof(ArvUvStreamBufferContext));
 	int i;
 	size_t offset = 0;
@@ -289,7 +289,7 @@ arv_uv_stream_buffer_context_new (ArvBuffer *buffer, ArvUvStreamThreadData *thre
 
 static void
 arv_uv_stream_buffer_context_cancel (gpointer key, gpointer value, gpointer callback_data)
-{
+{	trllog();
 	ArvUvStreamBufferContext* ctx = value;
 	int i;
 
@@ -310,7 +310,7 @@ arv_uv_stream_buffer_context_cancel (gpointer key, gpointer value, gpointer call
 
 static void
 arv_uv_stream_buffer_context_free (gpointer data)
-{
+{	trllog();
 	ArvUvStreamBufferContext* ctx = data;
 	int i;
 
@@ -330,7 +330,7 @@ arv_uv_stream_buffer_context_free (gpointer data)
 
 static void
 arv_uv_stream_submit_transfer (ArvUvStreamBufferContext* ctx, struct libusb_transfer* transfer, gboolean* cancel)
-{
+{	_entry:;
 	while (!g_atomic_int_get (cancel) && ((g_atomic_int_get(ctx->total_submitted_bytes) + transfer->length) > ARV_UV_STREAM_MAXIMUM_SUBMIT_TOTAL)) {
 		arv_uv_stream_buffer_context_wait_transfer_completed (ctx);
 	}
@@ -365,7 +365,7 @@ arv_uv_stream_submit_transfer (ArvUvStreamBufferContext* ctx, struct libusb_tran
 
 static void *
 arv_uv_stream_thread_async (void *data)
-{
+{	_entry:;
 	ArvUvStreamThreadData *thread_data = data;
 	ArvBuffer *buffer = NULL;
 	GHashTable *ctx_lookup;
@@ -442,7 +442,7 @@ arv_uv_stream_thread_async (void *data)
 
 static void *
 arv_uv_stream_thread_sync (void *data)
-{
+{	_entry:;
 	ArvUvStreamThreadData *thread_data = data;
 	ArvUvspPacket *packet;
 	ArvBuffer *buffer = NULL;
@@ -607,7 +607,7 @@ arv_uv_stream_thread_sync (void *data)
 
 static guint32
 align (guint32 val, guint32 alignment)
-{
+{	//_entry:;
 	/* Alignment must be a power of two, otherwise the used alignment algorithm does not work. */
 	g_assert (alignment > 0 && (alignment & (alignment - 1)) == 0);
 
@@ -616,7 +616,7 @@ align (guint32 val, guint32 alignment)
 
 static void
 arv_uv_stream_start_thread (ArvStream *stream)
-{
+{	_entry:;
 	ArvUvStream *uv_stream = ARV_UV_STREAM (stream);
 	ArvUvStreamPrivate *priv = arv_uv_stream_get_instance_private (uv_stream);
 	ArvUvStreamThreadData *thread_data;
@@ -708,7 +708,7 @@ arv_uv_stream_start_thread (ArvStream *stream)
 
 static void
 arv_uv_stream_stop_thread (ArvStream *stream)
-{
+{	_entry:;
 	ArvUvStream *uv_stream = ARV_UV_STREAM (stream);
 	ArvUvStreamPrivate *priv = arv_uv_stream_get_instance_private (uv_stream);
 	ArvUvStreamThreadData *thread_data;
@@ -722,7 +722,9 @@ arv_uv_stream_stop_thread (ArvStream *stream)
 	thread_data = priv->thread_data;
 
 	g_atomic_int_set (&priv->thread_data->cancel, TRUE);
+	trlm("joining ...");
 	g_thread_join (priv->thread);
+	trlm("joined");
 
 	priv->thread = NULL;
 
@@ -748,7 +750,7 @@ arv_uv_stream_stop_thread (ArvStream *stream)
 
 ArvStream *
 arv_uv_stream_new (ArvUvDevice *uv_device, ArvStreamCallback callback, void *callback_data, GError **error)
-{
+{	_entry:;
 	return g_initable_new (ARV_TYPE_UV_STREAM, NULL, error,
 			       "device", uv_device,
 			       "callback", callback,
@@ -758,7 +760,7 @@ arv_uv_stream_new (ArvUvDevice *uv_device, ArvStreamCallback callback, void *cal
 
 static void
 arv_uv_stream_constructed (GObject *object)
-{
+{	_entry:;
 	ArvUvStream *uv_stream = ARV_UV_STREAM (object);
 	ArvStream *stream = ARV_STREAM (uv_stream);
 	ArvUvStreamPrivate *priv = arv_uv_stream_get_instance_private (uv_stream);
@@ -792,7 +794,7 @@ arv_uv_stream_get_statistics (ArvStream *stream,
 				guint64 *n_completed_buffers,
 				guint64 *n_failures,
 				guint64 *n_underruns)
-{
+{	_entry:;
 	ArvUvStream *uv_stream = ARV_UV_STREAM (stream);
 	ArvUvStreamPrivate *priv = arv_uv_stream_get_instance_private (uv_stream);
 	ArvUvStreamThreadData *thread_data;
@@ -805,7 +807,7 @@ arv_uv_stream_get_statistics (ArvStream *stream,
 }
 
 ArvStreamStatistics * arv_uv_stream_get_statistics2(ArvStream *stream)
-{
+{	//_entry:;
    ArvUvStream *uv_stream = ARV_UV_STREAM (stream);
    ArvUvStreamPrivate *priv = arv_uv_stream_get_instance_private (uv_stream);
    return &priv->thread_data->stats;
@@ -813,12 +815,12 @@ ArvStreamStatistics * arv_uv_stream_get_statistics2(ArvStream *stream)
 
 static void
 arv_uv_stream_init (ArvUvStream *uv_stream)
-{
+{	_entry:;
 }
 
 static void
 arv_uv_stream_finalize (GObject *object)
-{
+{	_entry:;
 	ArvUvStream *uv_stream = ARV_UV_STREAM (object);
 	ArvUvStreamPrivate *priv = arv_uv_stream_get_instance_private (uv_stream);
 
@@ -846,18 +848,20 @@ arv_uv_stream_finalize (GObject *object)
 		float fails_ratio = thread_data->stats.n_failures / (thread_data->stats.n_completed_buffers + thread_data->stats.n_failures);
 		trlvd(fails_ratio);
 
+		trl();
 		g_mutex_clear (&thread_data->stream_mtx);
 		g_cond_clear (&thread_data->stream_event);
 		g_clear_object (&thread_data->uv_device);
 		g_clear_pointer (&priv->thread_data, g_free);
 	}
+	trl();
 
 	G_OBJECT_CLASS (arv_uv_stream_parent_class)->finalize (object);
 }
 
 static void
 arv_uv_stream_class_init (ArvUvStreamClass *uv_stream_class)
-{
+{	_entry:;
 	GObjectClass *object_class = G_OBJECT_CLASS (uv_stream_class);
 	ArvStreamClass *stream_class = ARV_STREAM_CLASS (uv_stream_class);
 
