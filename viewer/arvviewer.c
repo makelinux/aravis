@@ -1,3 +1,8 @@
+//#define test_mode 1
+//#define soft_enc 1
+//#define small 1
+//#define videotestsrc 1
+//#define test_limit 3
 /* Aravis - Digital camera library
  *
  * Copyright © 2009-2019 Emmanuel Pacaud
@@ -603,6 +608,9 @@ set_camera_widgets(ArvViewer *viewer)
 	static int done;
 	if (done)
 		return;
+#if small
+	arv_camera_set_region (viewer->camera, -1, -1, 256, 256, NULL);
+#endif
 	done = 1;
 	g_signal_handler_block (viewer->gain_hscale, viewer->gain_hscale_changed);
 	g_signal_handler_block (viewer->gain_spin_button, viewer->gain_spin_changed);
@@ -1084,6 +1092,8 @@ stop_video (ArvViewer *viewer)
 #if ORIG
 	gtk_container_foreach (GTK_CONTAINER (viewer->video_frame), remove_widget, viewer->video_frame);
 #endif
+	viewer->teepad = 0;
+	viewer->filesink = 0;
 
 	if (viewer->status_bar_update_event > 0) {
 		g_source_remove (viewer->status_bar_update_event);
@@ -1161,6 +1171,37 @@ gst_bin_add_link_many (GstElement * bin, GstElement * a, GstElement * b, ...)
 	return res;
 }
 
+gboolean
+gst_bin_unlink_remove_many (GstElement * bin, GstElement * a, GstElement * b, ...)
+	va_list args;
+	gboolean res = TRUE;
+
+	g_return_val_if_fail (GST_IS_BIN (bin), 0);
+	g_return_val_if_fail (GST_IS_ELEMENT (a), FALSE);
+
+	gst_element_set_state(a, GST_STATE_NULL);
+	va_start (args, b);
+
+	while (b) {
+		g_return_val_if_fail (GST_IS_ELEMENT (b), FALSE);
+		trlvd(GST_OBJECT_REFCOUNT(b));
+		gst_element_unlink (a, b);
+		trlvd(GST_OBJECT_REFCOUNT(b));
+		gst_element_set_state(b, GST_STATE_NULL);
+		assert(gst_bin_remove (GST_BIN(bin), a));
+
+		trlvd(GST_OBJECT_REFCOUNT(b));
+		a = b;
+		b = va_arg (args, GstElement *);
+	}
+	assert(gst_bin_remove (GST_BIN(bin), a));
+	trlvd(GST_OBJECT_REFCOUNT(a));
+	va_end (args);
+
+	return res;
+}
+
+	trlvd(GST_OBJECT_REFCOUNT(ctx->teepad));
 int make_video (ArvViewer *viewer)
 {
 	trl();
@@ -1741,6 +1782,10 @@ arv_viewer_new (void)
 			     "inactivity-timeout", 30000,
 			     NULL);
   signal (SIGINT, set_cancel);
+#if test_limit
+  alarm(test_limit);
+  signal (SIGALRM, set_cancel);
+#endif
 
 
   return arv_viewer;
