@@ -9,6 +9,29 @@ aravissrc='gst-launch-1.0 --gst-plugin-load=$gstaravis aravissrc'
 alias aravissrc="$aravissrc"
 export DISPLAY=:0
 
+cam2=($(arv-tool))
+test ${cam2[1]} && cam=${cam2[1]} # for zsh
+test ${cam2[0]} && cam=${cam2[0]} # for bash
+
+control()
+{
+	arv-tool -n $cam control "$@"
+}
+
+sequencer-exposure()
+{
+	control GainAuto=Off
+	control SequencerMode=Off SequencerConfigurationMode=On
+	control Width=512 Height=512
+	for s in $(seq 0 31); do
+		control ExposureTime=$((2000 + s * 1000)) SequencerSetSelector=$s SequencerSetSave=Execute
+	done
+	control SequencerMode=On
+	for s in $(seq 0 31); do
+		arv-tool snapshot $s.png
+	done
+}
+
 jetson-status()
 {
 	grep '' /usr/local/jetson_stats/fan_config
