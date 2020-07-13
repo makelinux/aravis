@@ -32,6 +32,47 @@ sequencer-exposure()
 	done
 }
 
+control()
+{
+	if [ -z "$cam" ]; then
+		cam2=($(arv-tool))
+		test ${cam2[1]} && cam=${cam2[1]} # for zsh
+		test ${cam2[0]} && cam=${cam2[0]} # for bash
+	fi
+
+	arv-tool -n $cam control "$@"
+}
+
+sequencer()
+{
+	if [ -z "$1" ]; then
+		cat <<-EOF
+		Syntax:
+
+		sequencer <Parameter> <Start> <Step>
+
+		Examples:
+
+		sequencer ExposureTime 2000 1000
+		sequencer Gamma 0 0.1
+		sequencer Gain 0 1
+
+		EOF
+		return
+	fi
+	control GainAuto=Off
+	control SequencerMode=Off SequencerConfigurationMode=On
+	control Width=512 Height=512
+	for s in $(seq 0 31); do
+		control $1=$(($2 + s * $3)) SequencerSetSelector=$s SequencerSetSave=Execute
+	done
+	control SequencerMode=On
+	for s in $(seq 0 31); do
+		arv-tool snapshot $s.png
+	done
+	control SequencerMode=Off SequencerConfigurationMode=Off AcquisitionMode=Continuous SequencerSetSelector=0 SequencerSetNext=1 Gamma=1
+}
+
 jetson-status()
 {
 	grep '' /usr/local/jetson_stats/fan_config
