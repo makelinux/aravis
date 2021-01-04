@@ -43,6 +43,27 @@ control()
 	arv-tool -n $cam control "$@"
 }
 
+burst()
+{
+	control TriggerSelector=FrameStart TriggerMode=On
+	control TriggerSelector=FrameBurstStart TriggerMode=On
+	control TriggerSelector=FrameStart TriggerMode=On
+	control TriggerSelector=FrameBurstStart TriggerMode=On
+	control AcquisitionBurstFrameCount=10
+	control AcquisitionBurstFrameCount=10
+	control AcquisitionStart
+	#EventFrameBurstStart
+	arv-tool snapshot
+	diff values.txt <(arv-tool values)
+	#control TriggerSelector=FrameBurstStart TriggerMode=Off
+	#control TriggerSelector=FrameStart TriggerMode=Off
+	#control TriggerSelector=FrameStart TriggerMode=Off
+	#control AcquisitionBurstFrameCount=1
+	#control AcquisitionBurstFrameCount=1
+	#arv-tool snapshot
+	#control AcquisitionMode=Continuous
+}
+
 sequencer()
 {
 	if [ -z "$1" ]; then
